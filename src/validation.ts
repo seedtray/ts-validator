@@ -11,9 +11,9 @@ import {
     PrimitiveType,
     PrimitiveTypes,
     Type,
-} from 'types'
-import {fail} from 'errors'
-
+    RecursiveReferenceType,
+} from './types'
+import {checkNotNil, fail} from './errors'
 
 export interface Validation {
     accept<T>(visitor: ValidationVisitor<T>): T
@@ -131,6 +131,16 @@ export class EnumValueValidation implements Validation {
     }
 }
 
+export class ReferenceTypeValidation implements Validation {
+    constructor(public readonly target: Type) {
+
+    }
+
+    accept<T>(visitor: ValidationVisitor<T>): T {
+        return visitor.visitReference(this)
+    }
+}
+
 export interface ValidationVisitor<T> {
     visitCommon(c: CommonValidation): T
 
@@ -153,6 +163,8 @@ export interface ValidationVisitor<T> {
     visitPrimitiveBoolean(p: PrimitiveBooleanValidation): T
 
     visitEnum(e: EnumValueValidation): T
+
+    visitReference(r: ReferenceTypeValidation): T
 }
 
 export class ValidationGenerator implements TypeVisitor<Validation> {
@@ -178,7 +190,7 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
         return new CommonValidation(this.getCommonValidations(primitive.of))
     }
 
-    private * objectPropertiesValidation(properties: Map<string, Type>): IterableIterator<Validation> {
+    private* objectPropertiesValidation(properties: Map<string, Type>): IterableIterator<Validation> {
         for (const [property, type] of properties.entries()) {
             yield new PropertyValidation(property, type.accept(this))
         }
@@ -233,5 +245,9 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
 
     visitLiteralBoolean(literal: LiteralBooleanType): Validation {
         return new PrimitiveBooleanValidation(literal.value)
+    }
+
+    visitRecursiveReference(ref: RecursiveReferenceType): Validation {
+        return new ReferenceTypeValidation(ref.getTarget())
     }
 }

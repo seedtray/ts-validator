@@ -1,13 +1,11 @@
 const appModulePath = require("app-module-path")
 import * as path from 'path'
 
-appModulePath.addPath(path.resolve(__dirname, '../'))
-
-import {ExpressionEmitter} from 'expressionEmitter'
-import {ValidationGenerator} from 'validation'
-import {TypePrettyPrinter} from 'typePrettyPrinter'
+import {ExpressionEmitter} from '../expressionEmitter'
+import {ValidationGenerator} from '../validation'
+import {TypePrettyPrinter} from '../typePrettyPrinter'
 import * as ts from 'typescript'
-import {SimpleFileLocator, TypeMapper} from 'typeParser'
+import {SimpleFileLocator, TypeMapper} from '../typeParser'
 
 function main() {
     const filename = process.argv[2]
@@ -24,7 +22,7 @@ function main() {
     }
     const typeOfNode = program.getTypeChecker().getTypeAtLocation(node)
     const mapper = new TypeMapper(program)
-    const validationType = mapper.map(typeOfNode)
+    const validationType = mapper.resolve(typeOfNode)
     const pretty = validationType.accept(new TypePrettyPrinter())
     console.log(pretty.toString())
     const validation = validationType.accept(new ValidationGenerator())

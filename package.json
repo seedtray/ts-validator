@@ -1,7 +1,9 @@
 {
   "name": "ts-validator",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
   },
   "jest": {
     "globals": {
@@ -37,9 +39,14 @@
     "@types/jest": "^22.1.2",
     "@types/node": "^9.4.5",
     "app-module-path": "^2.2.0",
-    "jest": "^22.2.2",
-    "ts-jest": "^22.0.4",
+    "jest": "^23.6.0",
+    "rollup": "^0.65.2",
+    "rollup-plugin-typescript2": "^0.17.0",
+    "ts-jest": "^23.10.4",
     "ts-node": "^4.1.0",
-    "typescript": "^2.7.1"
-  }
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^5.2.1",
+    "typescript": "^3.0.3"
+  },
+  "repository": "https://github.com/seedtray/ts-validator.git"
 }

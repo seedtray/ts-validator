@@ -10,11 +10,12 @@ import {
     PrimitiveNumberValidation,
     PrimitiveStringValidation,
     PropertyValidation,
+    ReferenceTypeValidation,
     SomeRequiredValidation,
     ValidationVisitor
-} from 'validation'
+} from './validation'
 
-import {fail} from 'errors'
+import {fail} from './errors'
 
 export class ExpressionEmitter implements ValidationVisitor<string> {
     private names: string[]
@@ -116,5 +117,10 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
             fail('name stack error')
         }
         this.currentName = lastName!
+    }
+
+    visitReference(r: ReferenceTypeValidation): string {
+        return 'true'
+        // return fail("Expression emitter can't deal with recursive types")
     }
 }

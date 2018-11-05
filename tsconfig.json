@@ -2,23 +2,13 @@
   "include": [
     "src/**/*.ts"
   ],
-  "exclude": [
-    "node_modules/**"
-  ],
   "compilerOptions": {
     "target": "es6",
-    "module": "commonjs",
-    "lib": [
-      "es6"
-    ],
-    "paths": {
-      "*": [
-        "./*",
-        "../node_modules/*"
-      ]
-    },
+    "module": "es6",
+    "sourceMap": true,
+    "noEmit": true,
+    "moduleResolution": "node",
     "outDir": "build/",
-    "strict": true,
-    "baseUrl": "./src/"
+    "strict": true
   }
 }

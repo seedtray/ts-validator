@@ -4,9 +4,9 @@ export function checkArgument(argument: string, expr: boolean) {
     }
 }
 
-export function checkNotNil<T>(ref: T | undefined | null): T {
-    if (ref === null || ref === undefined) {
-        throw new Error('unexpected nil')
+export function checkNotNil<T>(ref: T | undefined | null, message='unexpected nil'): T {
+    if (isNil(ref)){
+        throw new Error(message)
     }
     return ref as T
 }
@@ -19,4 +19,8 @@ export function checkState(stateExpr: boolean) {
 
 export function fail(msg?: string): never {
     throw new Error(msg ? msg : 'fail()')
+}
+
+export function isNil<T>(value: T | undefined | null): value is undefined | null {
+    return (value === null) || (value === undefined)
 }

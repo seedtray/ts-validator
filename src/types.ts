@@ -1,4 +1,4 @@
-import {checkArgument} from 'errors'
+import {checkArgument, checkNotNil, checkState, isNil} from './errors'
 
 export enum PrimitiveTypes {
     number = 'number',
@@ -28,12 +28,15 @@ export interface TypeVisitor<T> {
     visitLiteralNumber(literal: LiteralNumberType): T
 
     visitLiteralBoolean(literal: LiteralBooleanType): T
+
+    visitRecursiveReference(ref: RecursiveReferenceType): T
 }
 
 export interface Type {
+    name?: string
+
     accept<T>(visitor: TypeVisitor<T>): T
 }
-
 
 export class PrimitiveType implements Type {
     constructor(public readonly of: PrimitiveTypes) {
@@ -53,11 +56,11 @@ export const undefinedType = new PrimitiveType(PrimitiveTypes.undefined)
 export class ObjectType implements Type {
     public properties: Map<string, Type>
 
-    constructor() {
+    constructor(public name?: string) {
         this.properties = new Map()
     }
 
-    add(name: string, type: Type): this {
+    addProperty(name: string, type: Type): this {
         checkArgument('name', !this.properties.has(name))
         this.properties.set(name, type)
         return this
@@ -67,10 +70,10 @@ export class ObjectType implements Type {
         return visitor.visitObject(this)
     }
 
-    static of(spec: { [name: string]: Type }): ObjectType {
-        const type = new ObjectType()
+    static of(spec: { [name: string]: Type }, name?: string): ObjectType {
+        const type = new ObjectType(name)
         for (const property of Object.getOwnPropertyNames(spec)) {
-            type.add(property, spec[property])
+            type.addProperty(property, spec[property])
         }
         return type
     }
@@ -202,5 +205,30 @@ export class LiteralBooleanType implements Type {
 
     static of(value: boolean): LiteralBooleanType {
         return new LiteralBooleanType(value)
+    }
+}
+
+export class RecursiveReferenceType implements Type {
+    private target: Type | null
+
+    constructor(of: Type | null) {
+        this.target = of
+    }
+
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitRecursiveReference(this)
+    }
+
+    getTarget(): Type {
+        return checkNotNil(this.target)
+    }
+
+    resolve(target: Type): void {
+        checkState(isNil(this.target))
+        this.target = target
+    }
+
+    static of(target: Type): RecursiveReferenceType {
+        return new RecursiveReferenceType(target)
     }
 }

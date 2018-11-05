@@ -1,0 +1,53 @@
+{
+  "extends": [
+    "tslint:latest",
+    "tslint-microsoft-contrib"
+  ],
+  "rules": {
+    "no-relative-imports": ["allow-siblings"],
+    "interface-name": false,
+    "quotemark": [true, "single", "avoid-escape"],
+    "semicolon": false,
+    "member-access": [true, "no-public"],
+    "import-name": [
+      true, {
+        "momentTimezone": "moment"
+      }
+    ],
+    "max-classes-per-file": [
+      false,
+      1
+    ],
+    "promise-function-async": false,
+    "no-any": false,
+    "export-name": [true, {"ignore-case": true}],
+    "no-parameter-properties": false,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "arrays": "always",
+          "objects": "always",
+          "imports": "always",
+          "exports": "always"
+        },
+        "singleline": "never"
+      }
+    ],
+    "prefer-type-cast": false,
+    "array-type": [
+      true,
+      "array-simple"
+    ],
+    "function-name": [true, {"static-method-regex": "[A-Z][a-zA-Z0-9]+"}],
+    "typedef": [
+      true,
+      "call-signature",
+      "parameter",
+      "member-variable-declaration"
+    ]
+  },
+  "linterOptions": {
+    "typeCheck": true
+  }
+}

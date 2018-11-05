@@ -1,9 +1,19 @@
 import 'jest'
-import {TypePrettyPrinter} from 'typePrettyPrinter.ts'
+import {unindent} from './testUtils'
+import {TypePrettyPrinter} from './typePrettyPrinter'
 import {
-    ArrayType, booleanType, EnumType, IntersectionType, nullType, numberType, ObjectType,
-    stringType, TupleType,
-    undefinedType, UnionType
+    ArrayType,
+    booleanType,
+    EnumType,
+    IntersectionType,
+    nullType,
+    numberType,
+    ObjectType,
+    RecursiveReferenceType,
+    stringType,
+    TupleType,
+    undefinedType,
+    UnionType
 } from './types'
 
 const pp = new TypePrettyPrinter()
@@ -45,8 +55,8 @@ test('pretty prints enums', () => {
 })
 test('pretty prints simple objects', () => {
     const ot = new ObjectType()
-    ot.add('a', numberType)
-    ot.add('b', TupleType.of([numberType, stringType]))
+    ot.addProperty('a', numberType)
+    ot.addProperty('b', TupleType.of([numberType, stringType]))
     expect(ot.accept(pp).toString()).toBe(
         `{\n  a: number\n  b: [number, string]\n}`
     )
@@ -73,3 +83,35 @@ test('pretty nested objects', () => {
         '}',
     ].join('\n'))
 })
+
+test('pretty recursive types', () => {
+    const rec32 = new RecursiveReferenceType(null)
+    const rec31 = RecursiveReferenceType.of(ObjectType.of({a: rec32}, 'Recursive31'))
+    const rec33 = RecursiveReferenceType.of(ObjectType.of({d: rec31}, 'Recursive33'))
+    rec32.resolve(ObjectType.of({
+        b: rec32,
+        c: rec33,
+    }, 'Recursive32'))
+    const rec1 = ObjectType.of({t: rec33}, 'CompositionWithRecursive')
+    console.log(rec1.accept(pp).toString())
+    expect(rec1.accept(pp).toString()).toBe(unindent(
+        `
+        {
+          t: #Recursive33(
+            {
+              d: #Recursive31(
+                {
+                  a: #Recursive32(
+                    {
+                      b: RecursiveReference<Recursive32>
+                      c: RecursiveReference<Recursive33>
+                    }
+                  )
+                }
+              )
+            }
+          )
+        }`
+    ))
+})
+

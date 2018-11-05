@@ -45,7 +45,7 @@ interface Recursive2 {
 }
 
 interface Recursive31 {
-    a: Recursive31
+    a: Recursive32
 }
 
 interface Recursive32 {
@@ -54,5 +54,9 @@ interface Recursive32 {
 }
 
 interface Recursive33 {
-    d: Recursive33
+    d: Recursive31
+}
+
+interface ComposeWithRecursive {
+    t: Recursive33
 }

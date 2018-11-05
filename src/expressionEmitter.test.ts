@@ -1,4 +1,4 @@
-import {ExpressionEmitter} from 'expressionEmitter'
+import {ExpressionEmitter} from './expressionEmitter'
 import {
     LiteralStringType,
     numberType,
@@ -9,9 +9,9 @@ import {
     TupleType,
     Type,
     UnionType
-} from 'types'
-import {ValidationGenerator} from 'validation'
-import {checkState} from 'errors'
+} from './types'
+import {ValidationGenerator} from './validation'
+import {checkState} from './errors'
 
 function getAssignmentCode(name: string, value: any) {
     const valueRepr = JSON.stringify(value)
@@ -24,7 +24,6 @@ function getEmittedCode(name: string, type: Type): string {
     const validator = type.accept(validatorGenerator)
     return validator.accept(rawEmitter)
 }
-
 
 function runValidation(type: Type, value: any): boolean {
     const variableName = 'v'

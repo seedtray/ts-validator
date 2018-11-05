@@ -7,13 +7,14 @@ import {
     LiteralStringType,
     ObjectType,
     PrimitiveType,
+    RecursiveReferenceType,
     TupleType,
     Type,
     TypeVisitor,
     UnionType
-} from 'types'
+} from './types'
 
-import {fail} from 'errors'
+import {checkNotNil, fail, isNil} from './errors'
 
 export class PrettyInline {
 
@@ -23,7 +24,6 @@ export class PrettyInline {
     static joinSurround(parts: string[], joiner: string, prefix = '', suffix = ''): PrettyInline {
         return new PrettyInline(prefix + parts.join(joiner) + suffix)
     }
-
 
     toLines(indent: number): string {
         return ' '.repeat(indent) + this.expression
@@ -60,16 +60,20 @@ export class PrettyBlock {
     }
 }
 
-
 type PrettyType = PrettyInline | PrettyBlock
 
-
 export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
+    private visitedRecursiveStack: Type[]
+
+    constructor() {
+        this.visitedRecursiveStack = []
+    }
+
     visitPrimitive(p: PrimitiveType): PrettyType {
         return new PrettyInline(p.of)
     }
 
-    private * prettyProperties(properties: Map<string, Type>): IterableIterator<PrettyType> {
+    private* prettyProperties(properties: Map<string, Type>): IterableIterator<PrettyType> {
         for (const [name, type] of properties.entries()) {
             const prettyProperty = type.accept(this)
             if (prettyProperty instanceof PrettyInline) {
@@ -102,7 +106,7 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
     }
 
     private prettyListOfTypes(listOfTypes: Type[], inlineCase: (parts: PrettyInline[]) => PrettyType,
-        complexCase: (parts: PrettyType[]) => PrettyType): PrettyType {
+                              complexCase: (parts: PrettyType[]) => PrettyType): PrettyType {
         const prettyMembers = listOfTypes.map(type => type.accept(this))
         if (prettyMembers.every(pretty => pretty instanceof PrettyInline)) {
             const prettyExpressions = prettyMembers as PrettyInline[]
@@ -157,7 +161,7 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
         return `'${s}'`
     }
 
-    private * prettyEnumMembers(members: Map<string, string | number>): IterableIterator<PrettyInline> {
+    private* prettyEnumMembers(members: Map<string, string | number>): IterableIterator<PrettyInline> {
         for (const [name, value] of members.entries()) {
             const prettyValue = typeof value === 'string' ? this.quote(value) : value
             yield  new PrettyInline(`${name}=${prettyValue},`)
@@ -186,4 +190,15 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
         return new PrettyInline(`'${literal.value}'`)
     }
 
+    visitRecursiveReference(ref: RecursiveReferenceType): PrettyType {
+        const name = checkNotNil(ref.getTarget().name, 'expected recursive type to have a name')
+        const target = ref.getTarget()
+        if (!isNil(this.visitedRecursiveStack.find(t => t === target))) {
+            return new PrettyInline(`RecursiveReference<${name}>`)
+        }
+        this.visitedRecursiveStack.push(target)
+        const prettified = ref.getTarget().accept(this)
+        this.visitedRecursiveStack.pop()
+        return new PrettyBlock(new PrettyInline(`#${name}(`), [prettified], new PrettyInline(`)`))
+    }
 }
