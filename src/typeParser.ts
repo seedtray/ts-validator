@@ -1,7 +1,11 @@
+/**
+ * Parse ts types, by using the typescript type checker and converting from it's AST to
+ * our type definitions.
+ */
 import * as ts from 'typescript'
 
+import {checkNotNil, checkState, fail, isNil} from './errors'
 import {
-    ArrayType,
     booleanType,
     IntersectionType,
     LiteralBooleanType,
@@ -15,9 +19,8 @@ import {
     TupleType,
     Type,
     undefinedType,
-    UnionType
+    UnionType,
 } from './types'
-import {checkNotNil, checkState, fail, isNil} from './errors'
 
 interface TypeLocator {
     find(filename: string, typeName: string): ts.Node | undefined
@@ -33,9 +36,8 @@ export class SimpleFileLocator implements TypeLocator {
 
     find(filename: string, lookupName: string): ts.Node | undefined {
         const sourceFile = checkNotNil(this.program.getSourceFile(filename))
-        return ts.forEachChild(sourceFile,
-            node => this.visitTopLevel(node, lookupName)
-        )
+
+        return ts.forEachChild(sourceFile, node => this.visitTopLevel(node, lookupName))
     }
 
     private visitTopLevel(node: ts.Node, lookupName: string): ts.Node | undefined {
@@ -55,7 +57,7 @@ export class SimpleFileLocator implements TypeLocator {
     // }
 }
 
-function sortByName(propertiesOfType: ts.Symbol[]) {
+function sortByName(propertiesOfType: ts.Symbol[]): ts.Symbol[] {
     return propertiesOfType.sort((a: ts.Symbol, b: ts.Symbol): number => {
         if (a.name < b.name) {
             return 1
@@ -76,19 +78,19 @@ export class TypeStack {
         this.visiting = new Set()
     }
 
-    push(type: ts.Type): void {
-        checkState(!this.has(type))
-        this.stack.push(type)
-        this.visiting.add(type)
+    push(tsType: ts.Type): void {
+        checkState(!this.has(tsType))
+        this.stack.push(tsType)
+        this.visiting.add(tsType)
     }
 
     pop(): void {
-        const type = checkNotNil(this.stack.pop())
-        this.visiting.delete(type)
+        const tsType = checkNotNil(this.stack.pop())
+        this.visiting.delete(tsType)
     }
 
-    has(type: ts.Type): boolean {
-        return this.visiting.has(type)
+    has(tsType: ts.Type): boolean {
+        return this.visiting.has(tsType)
     }
 }
 
@@ -101,11 +103,13 @@ class RecursiveTypeRegistry {
         this.pendingReferences = new Map()
     }
 
-    addMaybeRecursiveType(source: ts.Type, resolved: Type): Type{
+    addMaybeRecursiveType(source: ts.Type, resolved: Type): Type {
         if (this.isRecursive(source)) {
             this.addKnownRecursiveType(source, resolved)
+
             return new RecursiveReferenceType(resolved)
         }
+
         return resolved
     }
 
@@ -113,12 +117,13 @@ class RecursiveTypeRegistry {
         if (this.recursiveTypesBySource.has(source)) {
             return new RecursiveReferenceType(checkNotNil(this.recursiveTypesBySource.get(source)))
         }
+
         return this.makePendingRecursiveReference(source)
     }
 
-    addKnownRecursiveType(source: ts.Type, type: Type): void {
+    addKnownRecursiveType(source: ts.Type, target: Type): void {
         checkState(!this.recursiveTypesBySource.has(source))
-        this.recursiveTypesBySource.set(source, type)
+        this.recursiveTypesBySource.set(source, target)
         this.resolvePendingReferences(source)
     }
 
@@ -132,6 +137,7 @@ class RecursiveTypeRegistry {
         }
         const ref = new RecursiveReferenceType(null)
         checkNotNil(this.pendingReferences.get(source)).push(ref)
+
         return ref
     }
 
@@ -170,9 +176,11 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
         const resolved = this.safeStepMap(source, stack)
         const refOrType = this.recursiveTypes.addMaybeRecursiveType(source, resolved)
         stack.pop()
+
         return refOrType
     }
 
+    //tslint:disable:no-bitwise
     private safeStepMap(tsType: ts.Type, stack: TypeStack): Type {
         if (tsType.flags & ts.TypeFlags.Null) {
             return nullType
@@ -210,47 +218,45 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
     }
 
     private mapArrayType(tsType: ts.Type, stack: TypeStack): Type {
-        const mapped = this.internalMap(tsType, stack)
-        if (mapped) {
-            return ArrayType.of(mapped)
-        }
-        return fail()
+        return this.internalMap(tsType, stack)
     }
 
     private mapObjectType(tsType: ts.Type, stack: TypeStack): Type {
-        const type = new ObjectType(this.checker.typeToString(tsType))
+        const mapped = new ObjectType(this.checker.typeToString(tsType))
         const properties = sortByName(this.checker.getPropertiesOfType(tsType))
         for (const property of properties) {
-            const propertyNode = property.valueDeclaration!
+            const propertyNode = checkNotNil(property.valueDeclaration)
             const propertyType = this.checker.getTypeOfSymbolAtLocation(property, propertyNode)
             const mappedType = this.internalMap(propertyType, stack)
             if (mappedType) {
-                type.addProperty(property.name, mappedType)
+                mapped.addProperty(property.name, mappedType)
             }
         }
-        return type
+
+        return mapped
     }
 
-    private mapUnionOfTypes(tsTypes: Array<ts.Type>, stack: TypeStack): Type {
-        return UnionType.of(tsTypes.map(tsType => this.internalMap(tsType, stack)))
+    private mapUnionOfTypes(tsTypes: ts.Type[], stack: TypeStack): Type {
+        return UnionType.Of(tsTypes.map(tsType => this.internalMap(tsType, stack)))
     }
 
-    private mapIntersectionOfTypes(tsTypes: Array<ts.Type>, stack: TypeStack): Type {
-        return IntersectionType.of(tsTypes.map(tsType => this.internalMap(tsType, stack)))
+    private mapIntersectionOfTypes(tsTypes: ts.Type[], stack: TypeStack): Type {
+        return IntersectionType.Of(tsTypes.map(tsType => this.internalMap(tsType, stack)))
 
     }
 
     private mapLiteralType(tsType: ts.LiteralType): Type {
         if (tsType.flags & ts.TypeFlags.NumberLiteral) {
-            return LiteralNumberType.of(tsType.value as number)
+            return LiteralNumberType.Of(tsType.value as number)
         }
         if (tsType.flags & ts.TypeFlags.StringLiteral) {
-            return LiteralStringType.of(tsType.value as string)
+            return LiteralStringType.Of(tsType.value as string)
 
         }
         if (tsType.flags & ts.TypeFlags.BooleanLiteral) {
-            return LiteralBooleanType.of((tsType as any).intrinsicName === 'true')
+            return LiteralBooleanType.Of((tsType as any).intrinsicName === 'true')
         }
+
         return fail('unknown literal kind')
     }
 
@@ -279,26 +285,29 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
     }
 
     private mapTupleType(tsType: ts.TypeReference, stack: TypeStack): Type {
-        const tuple = new TupleType()
-        const tupleTypes = checkNotNil(tsType.typeArguments)
-        for (const argument of tupleTypes) {
-            tuple.add(this.internalMap(argument, stack))
-        }
-        return tuple
+        const positionalTypes = checkNotNil(tsType.typeArguments).map(
+            argument => this.internalMap(argument, stack)
+        )
+
+        return TupleType.Of(positionalTypes)
     }
 
-    private dispatchObjectTypes(tsType: ts.ObjectType, stack: TypeStack) {
+    private dispatchObjectTypes(tsType: ts.ObjectType, stack: TypeStack): Type {
         if (this.isTypeReference(tsType)) {
             if (this.isArrayType(tsType)) {
-                return this.mapArrayType(tsType.typeArguments![0], stack)
+                return this.mapArrayType(checkNotNil(tsType.typeArguments)[0], stack)
             } else if (this.isTupleType(tsType)) {
                 return this.mapTupleType(tsType, stack)
             }
+
             return this.mapTypeReference(tsType, stack)
         } else if (this.isFunctionType(tsType)) {
             return fail('Cannot validate function type')
+        } else {
+            return this.mapObjectType(tsType, stack)
         }
-        return this.mapObjectType(tsType, stack)
-    }
-}
 
+    }
+
+    //tslint:enable:no-bitwise
+}

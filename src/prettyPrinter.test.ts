@@ -1,4 +1,6 @@
+//tslint:disable-next-line:missing-jsdoc no-implicit-dependencies no-import-side-effect
 import 'jest'
+
 import {unindent} from './testUtils'
 import {TypePrettyPrinter} from './typePrettyPrinter'
 import {
@@ -13,7 +15,7 @@ import {
     stringType,
     TupleType,
     undefinedType,
-    UnionType
+    UnionType,
 } from './types'
 
 const pp = new TypePrettyPrinter()
@@ -25,24 +27,24 @@ test('pretty prints basic types', () => {
     expect(undefinedType.accept(pp).toString()).toBe('undefined')
 })
 test('pretty prints tuples', () => {
-    expect(TupleType.of([numberType, stringType]).accept(pp).toString())
+    expect(TupleType.Of([numberType, stringType]).accept(pp).toString())
         .toBe('[number, string]')
 })
 test('short pretty prints arrays', () => {
-    expect(ArrayType.of(numberType).accept(pp).toString()).toBe('number[]')
+    expect(ArrayType.Of(numberType).accept(pp).toString()).toBe('number[]')
 })
 test('prints more complex arrays', () => {
     expect(
-        ArrayType.of(
-            TupleType.of([numberType])
+        ArrayType.Of(
+            TupleType.Of([numberType])
         ).accept(pp).toString()).toBe('Array<[number]>')
 })
 test('pretty print union types', () => {
-    expect(UnionType.of([numberType, booleanType]).accept(pp).toString())
+    expect(UnionType.Of([numberType, booleanType]).accept(pp).toString())
         .toBe('number | boolean')
 })
 test('pretty print intersection types', () => {
-    expect(IntersectionType.of([numberType, booleanType]).accept(pp).toString())
+    expect(IntersectionType.Of([numberType, booleanType]).accept(pp).toString())
         .toBe('number & boolean')
 })
 test('pretty prints enums', () => {
@@ -56,19 +58,19 @@ test('pretty prints enums', () => {
 test('pretty prints simple objects', () => {
     const ot = new ObjectType()
     ot.addProperty('a', numberType)
-    ot.addProperty('b', TupleType.of([numberType, stringType]))
+    ot.addProperty('b', TupleType.Of([numberType, stringType]))
     expect(ot.accept(pp).toString()).toBe(
         `{\n  a: number\n  b: [number, string]\n}`
     )
 })
 
 test('pretty nested objects', () => {
-    const nested = ObjectType.of({o2: nullType})
-    const ot = ObjectType.of({
+    const nested = ObjectType.Of({o2: nullType})
+    const ot = ObjectType.Of({
         a: numberType,
-        b: TupleType.of([numberType, stringType]),
+        b: TupleType.Of([numberType, stringType]),
         ot2: nested,
-        at: ArrayType.of(nested)
+        at: ArrayType.Of(nested),
     })
     expect(ot.accept(pp).toString()).toBe([
         '{',
@@ -86,14 +88,16 @@ test('pretty nested objects', () => {
 
 test('pretty recursive types', () => {
     const rec32 = new RecursiveReferenceType(null)
-    const rec31 = RecursiveReferenceType.of(ObjectType.of({a: rec32}, 'Recursive31'))
-    const rec33 = RecursiveReferenceType.of(ObjectType.of({d: rec31}, 'Recursive33'))
-    rec32.resolve(ObjectType.of({
-        b: rec32,
-        c: rec33,
-    }, 'Recursive32'))
-    const rec1 = ObjectType.of({t: rec33}, 'CompositionWithRecursive')
-    console.log(rec1.accept(pp).toString())
+    const rec31 = RecursiveReferenceType.Of(ObjectType.Of({a: rec32}, 'Recursive31'))
+    const rec33 = RecursiveReferenceType.Of(ObjectType.Of({d: rec31}, 'Recursive33'))
+    rec32.resolve(ObjectType.Of(
+        {
+            b: rec32,
+            c: rec33,
+        },
+        'Recursive32'
+    ))
+    const rec1 = ObjectType.Of({t: rec33}, 'CompositionWithRecursive')
     expect(rec1.accept(pp).toString()).toBe(unindent(
         `
         {
@@ -114,4 +118,3 @@ test('pretty recursive types', () => {
         }`
     ))
 })
-

@@ -48,6 +48,10 @@
     ]
   },
   "linterOptions": {
-    "typeCheck": true
+    "typeCheck": true,
+    "exclude": [
+      "build",
+      "example"
+    ]
   }
 }

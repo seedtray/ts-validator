@@ -1,3 +1,6 @@
+/**
+ * Visitor that emits a validator as a js expression source code.
+ */
 import {
     AllRequiredValidation,
     ArrayElementsValidation,
@@ -12,10 +15,10 @@ import {
     PropertyValidation,
     ReferenceTypeValidation,
     SomeRequiredValidation,
-    ValidationVisitor
+    ValidationVisitor,
 } from './validation'
 
-import {fail} from './errors'
+import {checkNotNil, fail} from './errors'
 
 export class ExpressionEmitter implements ValidationVisitor<string> {
     private names: string[]
@@ -24,11 +27,6 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
     constructor(paramName: string) {
         this.names = []
         this.currentName = paramName
-    }
-
-    private pushName(newName: string) {
-        this.names.push(this.currentName)
-        this.currentName = newName
     }
 
     visitCommon(c: CommonValidation): string {
@@ -56,6 +54,7 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
     visitPrecondition(p: PreconditionValidation): string {
         const precondition = p.precondition.accept(this)
         const validation = p.validation.accept(this)
+
         return `((${precondition}) && (${validation}))`
     }
 
@@ -63,6 +62,7 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
         this.pushName(`${this.currentName}.${p.property}`)
         const expression = p.validator.accept(this)
         this.popName()
+
         return expression
     }
 
@@ -70,18 +70,21 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
         this.pushName('element')
         const validator = a.validator.accept(this)
         this.popName()
+
         return `Array.every(element => ${validator}, ${this.currentName})`
     }
 
     visitAllRequired(a: AllRequiredValidation): string {
         const validators = a.validations.map(validator => validator.accept(this))
         const asLines = validators.join('\n  && ')
+
         return `(${asLines})`
     }
 
     visitSomeRequired(s: SomeRequiredValidation): string {
         const validators = s.validations.map(validator => validator.accept(this))
         const asLines = validators.join('\n  || ')
+
         return `(${asLines})`
     }
 
@@ -91,18 +94,19 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
 
     visitPrimitiveString(p: PrimitiveStringValidation): string {
         return `${this.currentName} === "${p.value}"`
-        // TODO: quotes
     }
 
     visitArrayElement(e: ArrayElementValidation): string {
         this.pushName(`${this.currentName}[${e.index}]`)
         const expression = e.validator.accept(this)
         this.popName()
+
         return expression
     }
 
     visitPrimitiveBoolean(p: PrimitiveBooleanValidation): string {
         const literal = p.value === true ? 'true' : 'false'
+
         return `${this.currentName} === "${literal}"`
     }
 
@@ -110,17 +114,18 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
         return fail('not implemented')
     }
 
-    private popName() {
-        // include Optional<T>
-        const lastName = this.names.pop()
-        if (!lastName) {
-            fail('name stack error')
-        }
-        this.currentName = lastName!
-    }
-
     visitReference(r: ReferenceTypeValidation): string {
         return 'true'
         // return fail("Expression emitter can't deal with recursive types")
+    }
+
+    private pushName(newName: string): void {
+        this.names.push(this.currentName)
+        this.currentName = newName
+    }
+
+    private popName(): void {
+        const lastName = this.names.pop()
+        this.currentName = checkNotNil(lastName)
     }
 }

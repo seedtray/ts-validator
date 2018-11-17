@@ -1,3 +1,7 @@
+/**
+ * Intermediate representation of a validation.
+ */
+import {fail} from './errors'
 import {
     ArrayType,
     EnumType,
@@ -5,15 +9,14 @@ import {
     LiteralBooleanType,
     LiteralNumberType,
     LiteralStringType,
-    ObjectType, TupleType,
+    ObjectType, PrimitiveType,
+    PrimitiveTypes,
+    RecursiveReferenceType,
+    TupleType,
+    Type,
     TypeVisitor,
     UnionType,
-    PrimitiveType,
-    PrimitiveTypes,
-    Type,
-    RecursiveReferenceType,
 } from './types'
-import {checkNotNil, fail} from './errors'
 
 export interface Validation {
     accept<T>(visitor: ValidationVisitor<T>): T
@@ -132,7 +135,7 @@ export class EnumValueValidation implements Validation {
 }
 
 export class ReferenceTypeValidation implements Validation {
-    constructor(public readonly target: Type) {
+    constructor(readonly target: Type) {
 
     }
 
@@ -169,31 +172,8 @@ export interface ValidationVisitor<T> {
 
 export class ValidationGenerator implements TypeVisitor<Validation> {
 
-    private getCommonValidations(primitiveType: PrimitiveTypes): CommonValidations {
-        switch (primitiveType) {
-        case 'number':
-            return CommonValidations.isNumber
-        case 'boolean':
-            return CommonValidations.isBoolean
-        case 'null':
-            return CommonValidations.isNull
-        case 'undefined':
-            return CommonValidations.isUndefined
-        case 'string':
-            return CommonValidations.isString
-        default:
-            return fail()
-        }
-    }
-
     visitPrimitive(primitive: PrimitiveType): CommonValidation {
-        return new CommonValidation(this.getCommonValidations(primitive.of))
-    }
-
-    private* objectPropertiesValidation(properties: Map<string, Type>): IterableIterator<Validation> {
-        for (const [property, type] of properties.entries()) {
-            yield new PropertyValidation(property, type.accept(this))
-        }
+        return new CommonValidation(this.getCommonValidations(primitive.target))
     }
 
     visitObject(o: ObjectType): Validation {
@@ -206,27 +186,30 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
     visitArray(a: ArrayType): Validation {
         return new PreconditionValidation(
             new CommonValidation(CommonValidations.isArray),
-            new ArrayElementsValidation(a.of.accept(this))
+            new ArrayElementsValidation(a.target.accept(this))
         )
     }
 
     visitUnion(u: UnionType): Validation {
-        return new SomeRequiredValidation(u.of.map(type => type.accept(this)))
+        return new SomeRequiredValidation(u.target.map(target => target.accept(this)))
     }
 
     visitIntersection(i: IntersectionType): Validation {
-        return new AllRequiredValidation(i.of.map(type => type.accept(this)))
+        return new AllRequiredValidation(i.target.map(target => target.accept(this)))
     }
 
     visitTuple(t: TupleType): Validation {
-        const elementValidations = t.of.map((type, i) =>
-            new ArrayElementValidation(i, type.accept(this))
+        const elementValidations = t.target.map(
+            (target, i) => new ArrayElementValidation(i, target.accept(this))
         )
+
         return new PreconditionValidation(
-            new AllRequiredValidation([
-                new CommonValidation(CommonValidations.isArray),
-                new PropertyValidation('length', new PrimitiveNumberValidation(t.of.length))
-            ]),
+            new AllRequiredValidation(
+                [
+                    new CommonValidation(CommonValidations.isArray),
+                    new PropertyValidation('length',
+                                           new PrimitiveNumberValidation(t.target.length)),
+                ]),
             new AllRequiredValidation(elementValidations),
         )
     }
@@ -249,5 +232,28 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
 
     visitRecursiveReference(ref: RecursiveReferenceType): Validation {
         return new ReferenceTypeValidation(ref.getTarget())
+    }
+
+    private getCommonValidations(primitiveType: PrimitiveTypes): CommonValidations {
+        switch (primitiveType) {
+        case 'number':
+            return CommonValidations.isNumber
+        case 'boolean':
+            return CommonValidations.isBoolean
+        case 'null':
+            return CommonValidations.isNull
+        case 'undefined':
+            return CommonValidations.isUndefined
+        case 'string':
+            return CommonValidations.isString
+        default:
+            return fail()
+        }
+    }
+
+    private* objectPropertiesValidation(properties: Map<string, Type>): IterableIterator<Validation> {
+        for (const [property, type] of properties.entries()) {
+            yield new PropertyValidation(property, type.accept(this))
+        }
     }
 }

@@ -1,3 +1,6 @@
+/**
+ * Types for expressing some typescript Types, and visitor definitions for type processors.
+ */
 import {checkArgument, checkNotNil, checkState, isNil} from './errors'
 
 export enum PrimitiveTypes {
@@ -5,7 +8,7 @@ export enum PrimitiveTypes {
     boolean = 'boolean',
     string = 'string',
     null = 'null',
-    undefined = 'undefined'
+    undefined = 'undefined',
 }
 
 export interface TypeVisitor<T> {
@@ -39,7 +42,7 @@ export interface Type {
 }
 
 export class PrimitiveType implements Type {
-    constructor(public readonly of: PrimitiveTypes) {
+    constructor(readonly target: PrimitiveTypes) {
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -54,95 +57,100 @@ export const nullType = new PrimitiveType(PrimitiveTypes.null)
 export const undefinedType = new PrimitiveType(PrimitiveTypes.undefined)
 
 export class ObjectType implements Type {
-    public properties: Map<string, Type>
+    properties: Map<string, Type>
 
     constructor(public name?: string) {
         this.properties = new Map()
     }
 
-    addProperty(name: string, type: Type): this {
+    static Of(spec: { [name: string]: Type }, name?: string): ObjectType {
+        const target = new ObjectType(name)
+        for (const property of Object.getOwnPropertyNames(spec)) {
+            target.addProperty(property, spec[property])
+        }
+
+        return target
+    }
+
+    addProperty(name: string, target: Type): this {
         checkArgument('name', !this.properties.has(name))
-        this.properties.set(name, type)
+        this.properties.set(name, target)
+
         return this
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitObject(this)
     }
-
-    static of(spec: { [name: string]: Type }, name?: string): ObjectType {
-        const type = new ObjectType(name)
-        for (const property of Object.getOwnPropertyNames(spec)) {
-            type.addProperty(property, spec[property])
-        }
-        return type
-    }
 }
 
 export class ArrayType implements Type {
-    constructor(public of: Type) {
+    constructor(public target: Type) {
 
+    }
+
+    static Of(target: Type): ArrayType {
+        return new ArrayType(target)
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitArray(this)
     }
-
-    static of(type: Type) {
-        return new ArrayType(type)
-    }
 }
 
 abstract class ListOfTypes {
-    public readonly of: Array<Type>
+    readonly target: Type[]
 
-    constructor() {
-        this.of = []
+    protected constructor() {
+        this.target = []
     }
 
-    add(type: Type): this {
-        this.of.push(type)
+    add(target: Type): this {
+        this.target.push(target)
+
         return this
     }
 
-    addAll(types: Array<Type>): this {
-        for (const type of types) {
-            this.add(type)
+    addAll(types: Type[]): this {
+        for (const target of types) {
+            this.add(target)
         }
+
         return this
     }
 }
 
 export class UnionType extends ListOfTypes implements Type {
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitUnion(this)
+    static Of(types: Type[]): UnionType {
+        const union = new UnionType()
+
+        return union.addAll(types)
     }
 
-    static of(types: Type[]): UnionType {
-        const union = new UnionType()
-        return union.addAll(types)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitUnion(this)
     }
 }
 
 export class IntersectionType extends ListOfTypes implements Type {
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitIntersection(this)
+    static Of(types: Type[]): IntersectionType {
+        const intersection = new IntersectionType()
+
+        return intersection.addAll(types)
     }
 
-    static of(types: Type[]): IntersectionType {
-        const intersection = new IntersectionType()
-        return intersection.addAll(types)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitIntersection(this)
     }
 }
 
 export class TupleType extends ListOfTypes implements Type {
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitTuple(this)
+    static Of(types: Type[]): TupleType {
+        return (new TupleType()).addAll(types)
     }
 
-    static of(types: Type[]): TupleType {
-        const tuple = new TupleType()
-        return tuple.addAll(types)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitTuple(this)
     }
 }
 
@@ -156,6 +164,7 @@ export class EnumType implements Type {
     add(name: string, value: string | number): this {
         checkArgument('name', !this.members.has(name))
         this.members.set(name, value)
+
         return this
     }
 
@@ -169,12 +178,12 @@ export class LiteralStringType implements Type {
     constructor(public value: string) {
     }
 
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitLiteralString(this)
+    static Of(value: string): LiteralStringType {
+        return new LiteralStringType(value)
     }
 
-    static of(value: string): LiteralStringType {
-        return new LiteralStringType(value)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitLiteralString(this)
     }
 
 }
@@ -184,12 +193,12 @@ export class LiteralNumberType implements Type {
     constructor(public value: number) {
     }
 
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitLiteralNumber(this)
+    static Of(value: number): LiteralNumberType {
+        return new LiteralNumberType(value)
     }
 
-    static of(value: number): LiteralNumberType {
-        return new LiteralNumberType(value)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitLiteralNumber(this)
     }
 
 }
@@ -199,20 +208,24 @@ export class LiteralBooleanType implements Type {
     constructor(public value: boolean) {
     }
 
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitLiteralBoolean(this)
+    static Of(value: boolean): LiteralBooleanType {
+        return new LiteralBooleanType(value)
     }
 
-    static of(value: boolean): LiteralBooleanType {
-        return new LiteralBooleanType(value)
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitLiteralBoolean(this)
     }
 }
 
 export class RecursiveReferenceType implements Type {
     private target: Type | null
 
-    constructor(of: Type | null) {
-        this.target = of
+    constructor(target: Type | null) {
+        this.target = target
+    }
+
+    static Of(target: Type): RecursiveReferenceType {
+        return new RecursiveReferenceType(target)
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -226,9 +239,5 @@ export class RecursiveReferenceType implements Type {
     resolve(target: Type): void {
         checkState(isNil(this.target))
         this.target = target
-    }
-
-    static of(target: Type): RecursiveReferenceType {
-        return new RecursiveReferenceType(target)
     }
 }

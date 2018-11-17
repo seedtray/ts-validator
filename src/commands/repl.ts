@@ -1,13 +1,17 @@
-const appModulePath = require("app-module-path")
+/**
+ * Simple command line script for interacting with the working parts of
+ * the validator.
+ */
 import * as path from 'path'
+import * as ts from 'typescript'
 
 import {ExpressionEmitter} from '../expressionEmitter'
-import {ValidationGenerator} from '../validation'
-import {TypePrettyPrinter} from '../typePrettyPrinter'
-import * as ts from 'typescript'
 import {SimpleFileLocator, TypeMapper} from '../typeParser'
+import {TypePrettyPrinter} from '../typePrettyPrinter'
+import {ValidationGenerator} from '../validation'
 
-function main() {
+//tslint:disable:no-console
+function main(): void {
     const filename = process.argv[2]
     const typeName = process.argv[3]
     const options = {
@@ -18,6 +22,7 @@ function main() {
     const node = locator.find(filename, typeName)
     if (!node) {
         console.log('not found')
+
         return
     }
     const typeOfNode = program.getTypeChecker().getTypeAtLocation(node)
