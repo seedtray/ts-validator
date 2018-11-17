@@ -3,3 +3,4 @@ node_modules/
 archived/
 build/
 .idea/
+yarn-error.log
