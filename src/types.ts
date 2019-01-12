@@ -33,11 +33,11 @@ export interface TypeVisitor<T> {
     visitLiteralBoolean(literal: LiteralBooleanType): T
 
     visitRecursiveReference(ref: RecursiveReferenceType): T
+
+    visitNamedType(t: NamedType): T
 }
 
 export interface Type {
-    name?: string
-
     accept<T>(visitor: TypeVisitor<T>): T
 }
 
@@ -59,12 +59,12 @@ export const undefinedType = new PrimitiveType(PrimitiveTypes.undefined)
 export class ObjectType implements Type {
     properties: Map<string, Type>
 
-    constructor(public name?: string) {
+    constructor() {
         this.properties = new Map()
     }
 
-    static Of(spec: { [name: string]: Type }, name?: string): ObjectType {
-        const target = new ObjectType(name)
+    static Of(spec: { [name: string]: Type }): ObjectType {
+        const target = new ObjectType()
         for (const property of Object.getOwnPropertyNames(spec)) {
             target.addProperty(property, spec[property])
         }
@@ -218,13 +218,13 @@ export class LiteralBooleanType implements Type {
 }
 
 export class RecursiveReferenceType implements Type {
-    private target: Type | null
+    private target: NamedType | null
 
-    constructor(target: Type | null) {
+    constructor(target: NamedType | null) {
         this.target = target
     }
 
-    static Of(target: Type): RecursiveReferenceType {
+    static Of(target: NamedType): RecursiveReferenceType {
         return new RecursiveReferenceType(target)
     }
 
@@ -232,12 +232,34 @@ export class RecursiveReferenceType implements Type {
         return visitor.visitRecursiveReference(this)
     }
 
-    getTarget(): Type {
+    getTarget(): NamedType {
         return checkNotNil(this.target)
     }
 
-    resolve(target: Type): void {
+    resolve(target: NamedType): void {
         checkState(isNil(this.target))
         this.target = target
+    }
+}
+
+export interface TypeName {
+    name: string
+    modulePath: string
+    isExported: boolean
+}
+
+export class NamedType implements TypeName, Type {
+    constructor(readonly name: string,
+                readonly modulePath: string,
+                readonly isExported: boolean,
+                readonly target: Type) {
+
+    }
+    static Of(name: string, modulePath: string, isExported: boolean, target: Type): NamedType {
+        return new NamedType(name, modulePath, isExported, target)
+    }
+
+    accept<T>(visitor: TypeVisitor<T>): T {
+        return visitor.visitNamedType(this)
     }
 }

@@ -8,7 +8,7 @@ import {
     IntersectionType,
     LiteralBooleanType,
     LiteralNumberType,
-    LiteralStringType,
+    LiteralStringType, NamedType,
     ObjectType, PrimitiveType,
     PrimitiveTypes,
     RecursiveReferenceType,
@@ -134,13 +134,23 @@ export class EnumValueValidation implements Validation {
     }
 }
 
-export class ReferenceTypeValidation implements Validation {
-    constructor(readonly target: Type) {
+export class RecursiveValidation implements Validation {
+    constructor(readonly ref: NamedType) {
 
     }
 
     accept<T>(visitor: ValidationVisitor<T>): T {
-        return visitor.visitReference(this)
+        return visitor.visitRecursiveValidation(this)
+    }
+}
+
+export class ReferencableValidation implements Validation {
+    constructor(readonly target: NamedType, readonly validation: Validation) {
+
+    }
+
+    accept<T>(visitor: ValidationVisitor<T>): T {
+        return visitor.visitReferencableValidation(this)
     }
 }
 
@@ -167,7 +177,9 @@ export interface ValidationVisitor<T> {
 
     visitEnum(e: EnumValueValidation): T
 
-    visitReference(r: ReferenceTypeValidation): T
+    visitRecursiveValidation(r: RecursiveValidation): T
+
+    visitReferencableValidation(r: ReferencableValidation): T
 }
 
 export class ValidationGenerator implements TypeVisitor<Validation> {
@@ -231,7 +243,11 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
     }
 
     visitRecursiveReference(ref: RecursiveReferenceType): Validation {
-        return new ReferenceTypeValidation(ref.getTarget())
+        return new RecursiveValidation(ref.getTarget())
+    }
+
+    visitNamedType(udt: NamedType): Validation {
+        return new ReferencableValidation(udt, udt.target.accept(this))
     }
 
     private getCommonValidations(primitiveType: PrimitiveTypes): CommonValidations {

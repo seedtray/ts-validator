@@ -14,6 +14,7 @@
         "momentTimezone": "moment"
       }
     ],
+    "newline-per-chained-call": false,
     "max-classes-per-file": [
       false,
       1
@@ -49,9 +50,6 @@
   },
   "linterOptions": {
     "typeCheck": true,
-    "exclude": [
-      "build",
-      "example"
-    ]
+    "include": ["src/**/*.ts"]
   }
 }

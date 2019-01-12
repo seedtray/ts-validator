@@ -2,7 +2,7 @@
 import typescript from 'rollup-plugin-typescript2';
 
 export default {
-    entry: './src/commands/repl.ts',
+    input: './src/commands/repl.ts',
     output: {
         file: 'build/repl.js',
         format: 'cjs',

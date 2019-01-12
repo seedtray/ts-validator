@@ -60,3 +60,10 @@ interface Recursive33 {
 interface ComposeWithRecursive {
     t: Recursive33
 }
+
+interface WithAnonymous {
+    t: {
+        another: boolean,
+        prop: number,
+    }
+}

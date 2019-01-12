@@ -1,3 +1,5 @@
+import {TypeVisitor} from './types'
+
 /**
  * Visitor that emits a validator as a js expression source code.
  */
@@ -12,10 +14,9 @@ import {
     PrimitiveBooleanValidation,
     PrimitiveNumberValidation,
     PrimitiveStringValidation,
-    PropertyValidation,
-    ReferenceTypeValidation,
-    SomeRequiredValidation,
-    ValidationVisitor,
+    PropertyValidation, RecursiveValidation,
+    ReferencableValidation,
+    SomeRequiredValidation, ValidationVisitor,
 } from './validation'
 
 import {checkNotNil, fail} from './errors'
@@ -114,9 +115,13 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
         return fail('not implemented')
     }
 
-    visitReference(r: ReferenceTypeValidation): string {
+    visitRecursiveValidation(r: RecursiveValidation): string {
         return 'true'
         // return fail("Expression emitter can't deal with recursive types")
+    }
+
+    visitReferencableValidation(r: ReferencableValidation): string {
+        return r.validation.accept(this)
     }
 
     private pushName(newName: string): void {

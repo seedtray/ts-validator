@@ -4,13 +4,13 @@
  */
 import * as ts from 'typescript'
 
-import {checkNotNil, checkState, fail, isNil} from './errors'
+import {assert, checkNotNil, checkState, fail, isNil} from './errors'
 import {
     booleanType,
     IntersectionType,
     LiteralBooleanType,
     LiteralNumberType,
-    LiteralStringType,
+    LiteralStringType, NamedType,
     nullType,
     numberType,
     ObjectType,
@@ -18,6 +18,7 @@ import {
     stringType,
     TupleType,
     Type,
+    TypeName,
     undefinedType,
     UnionType,
 } from './types'
@@ -95,7 +96,7 @@ export class TypeStack {
 }
 
 class RecursiveTypeRegistry {
-    recursiveTypesBySource: Map<ts.Type, Type>
+    recursiveTypesBySource: Map<ts.Type, NamedType>
     pendingReferences: Map<ts.Type, RecursiveReferenceType[]>
 
     constructor() {
@@ -105,9 +106,9 @@ class RecursiveTypeRegistry {
 
     addMaybeRecursiveType(source: ts.Type, resolved: Type): Type {
         if (this.isRecursive(source)) {
-            this.addKnownRecursiveType(source, resolved)
+            this.addKnownRecursiveType(source, resolved as any)
 
-            return new RecursiveReferenceType(resolved)
+            return new RecursiveReferenceType(resolved as any)
         }
 
         return resolved
@@ -121,13 +122,13 @@ class RecursiveTypeRegistry {
         return this.makePendingRecursiveReference(source)
     }
 
-    addKnownRecursiveType(source: ts.Type, target: Type): void {
+    addKnownRecursiveType(source: ts.Type, target: NamedType): void {
         checkState(!this.recursiveTypesBySource.has(source))
         this.recursiveTypesBySource.set(source, target)
         this.resolvePendingReferences(source)
     }
 
-    private isRecursive(source: ts.Type): boolean {
+    isRecursive(source: ts.Type): boolean {
         return this.recursiveTypesBySource.has(source) || this.pendingReferences.has(source)
     }
 
@@ -174,10 +175,22 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
         }
         stack.push(source)
         const resolved = this.safeStepMap(source, stack)
-        const refOrType = this.recursiveTypes.addMaybeRecursiveType(source, resolved)
+        const resolvedWithMaybeName = this.makeMaybeNamedType(source, resolved)
+        if (this.recursiveTypes.isRecursive(source)) {
+            this.recursiveTypes.addKnownRecursiveType(source, resolvedWithMaybeName as any)
+        }
         stack.pop()
 
-        return refOrType
+        return resolvedWithMaybeName
+    }
+
+    private makeMaybeNamedType(source: ts.Type, target: Type): NamedType | Type {
+        const tsSymbol = source.getSymbol()
+        if (isNil(tsSymbol)) {
+            return target
+        } else {
+            return new NamedType(tsSymbol.getName(), 'unknown', true, target)
+        }
     }
 
     //tslint:disable:no-bitwise
@@ -222,7 +235,7 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
     }
 
     private mapObjectType(tsType: ts.Type, stack: TypeStack): Type {
-        const mapped = new ObjectType(this.checker.typeToString(tsType))
+        const mapped = new ObjectType()
         const properties = sortByName(this.checker.getPropertiesOfType(tsType))
         for (const property of properties) {
             const propertyNode = checkNotNil(property.valueDeclaration)
@@ -232,8 +245,11 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
                 mapped.addProperty(property.name, mappedType)
             }
         }
+        //TODO: resolve module path
 
-        return mapped
+        return NamedType.Of(
+            this.checker.typeToString(tsType), 'unknown', true, mapped
+        )
     }
 
     private mapUnionOfTypes(tsTypes: ts.Type[], stack: TypeStack): Type {

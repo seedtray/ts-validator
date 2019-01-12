@@ -7,7 +7,7 @@ import {
     ArrayType,
     booleanType,
     EnumType,
-    IntersectionType,
+    IntersectionType, NamedType,
     nullType,
     numberType,
     ObjectType,
@@ -67,54 +67,49 @@ test('pretty prints simple objects', () => {
 test('pretty nested objects', () => {
     const nested = ObjectType.Of({o2: nullType})
     const ot = ObjectType.Of({
-        a: numberType,
-        b: TupleType.Of([numberType, stringType]),
-        ot2: nested,
-        at: ArrayType.Of(nested),
-    })
-    expect(ot.accept(pp).toString()).toBe([
-        '{',
-        '  a: number',
-        '  b: [number, string]',
-        '  ot2: {',
-        '    o2: null',
-        '  }',
-        '  at: Array<{',
-        '    o2: null',
-        '  }>',
-        '}',
-    ].join('\n'))
+                                 a: numberType,
+                                 b: TupleType.Of([numberType, stringType]),
+                                 ot2: nested,
+                                 at: ArrayType.Of(nested),
+                             })
+    expect(ot.accept(pp).toString()).toBe(unindent(
+        `
+        {
+          a: number
+          b: [number, string]
+          ot2: {
+            o2: null
+          }
+          at: Array<{
+            o2: null
+          }>
+        }`))
 })
 
 test('pretty recursive types', () => {
     const rec32 = new RecursiveReferenceType(null)
-    const rec31 = RecursiveReferenceType.Of(ObjectType.Of({a: rec32}, 'Recursive31'))
-    const rec33 = RecursiveReferenceType.Of(ObjectType.Of({d: rec31}, 'Recursive33'))
-    rec32.resolve(ObjectType.Of(
-        {
-            b: rec32,
-            c: rec33,
-        },
-        'Recursive32'
-    ))
-    const rec1 = ObjectType.Of({t: rec33}, 'CompositionWithRecursive')
+    const rec31 = RecursiveReferenceType.Of(
+        NamedType.Of('Recursive31', 'test', true, ObjectType.Of({a: rec32}))
+    )
+    const rec33 = RecursiveReferenceType.Of(
+        NamedType.Of('Recursive33', 'test', true, ObjectType.Of({d: rec31}))
+    )
+    rec32.resolve(NamedType.Of('Recursive32', 'test', true, ObjectType.Of({b: rec32, c: rec33})))
+
+    const rec1 = RecursiveReferenceType.Of(
+        NamedType.Of('CompositionWithRecursive', 'test', true, ObjectType.Of({t: rec33}))
+    )
     expect(rec1.accept(pp).toString()).toBe(unindent(
         `
-        {
-          t: #Recursive33(
-            {
-              d: #Recursive31(
-                {
-                  a: #Recursive32(
-                    {
-                      b: RecursiveReference<Recursive32>
-                      c: RecursiveReference<Recursive33>
-                    }
-                  )
-                }
-              )
+        { [CompositionWithRecursive]
+          t: { [Recursive33]
+            d: { [Recursive31]
+              a: { [Recursive32]
+                b: RecursiveReference<Recursive32>
+                c: RecursiveReference<Recursive33>
+              }
             }
-          )
+          }
         }`
     ))
 })

@@ -21,6 +21,14 @@ export function checkState(stateExpr: boolean): void {
     }
 }
 
+export function assert(expr: boolean): expr is true {
+    if (!expr) {
+        throw new Error(`Invalid state`)
+    }
+
+    return true
+}
+
 export function fail(msg?: string): never {
     throw new Error(msg ? msg : 'fail()')
 }

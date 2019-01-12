@@ -7,7 +7,7 @@ import {
     IntersectionType,
     LiteralBooleanType,
     LiteralNumberType,
-    LiteralStringType,
+    LiteralStringType, NamedType,
     ObjectType,
     PrimitiveType,
     RecursiveReferenceType,
@@ -38,6 +38,10 @@ export class PrettyInline {
 
     toString(): string {
         return this.toLines(0)
+    }
+
+    withSuffix(suffix: string): PrettyInline {
+        return new PrettyInline(this.expression + suffix)
     }
 }
 
@@ -169,8 +173,21 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
         this.visitedRecursiveStack.push(target)
         const prettified = ref.getTarget().accept(this)
         this.visitedRecursiveStack.pop()
+        return prettified
+    }
 
-        return new PrettyBlock(new PrettyInline(`#${name}(`), [prettified], new PrettyInline(`)`))
+    visitNamedType(t: NamedType): PrettyType {
+        const nameRef = ` [${t.name}]`
+        const prettyType = t.target.accept(this)
+        if (prettyType instanceof PrettyBlock) {
+            return new PrettyBlock(
+                prettyType.opening.withSuffix(nameRef),
+                prettyType.parts,
+                prettyType.end
+            )
+        } else {
+            return prettyType.withSuffix(nameRef)
+        }
     }
 
     private* prettyProperties(properties: Map<string, Type>): IterableIterator<PrettyType> {
