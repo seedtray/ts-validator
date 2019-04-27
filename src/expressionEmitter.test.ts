@@ -1,7 +1,6 @@
 // tslint:disable:missing-jsdoc
 
 import {checkState} from './errors'
-import {ExpressionEmitter} from './expressionEmitter'
 import {
     LiteralStringType,
     numberType,
@@ -13,7 +12,8 @@ import {
     Type,
     UnionType,
 } from './types'
-import {ValidationGenerator} from './validation'
+import {typeToValidation} from './typeToValidation'
+import {validationToJavascriptSource} from './validationToJavascriptSource'
 
 function getAssignmentCode(name: string, value: any): string {
     const valueRepr = JSON.stringify(value)
@@ -21,18 +21,16 @@ function getAssignmentCode(name: string, value: any): string {
     return `var ${name} = ${valueRepr}`
 }
 
-function getEmittedCode(name: string, target: Type): string {
-    const validatorGenerator = new ValidationGenerator()
-    const rawEmitter = new ExpressionEmitter(name)
-    const validator = target.accept(validatorGenerator)
+function typeToJsValidator(name: string, target: Type): string {
+    const validation = typeToValidation(target)
 
-    return validator.accept(rawEmitter)
+    return validationToJavascriptSource(validation, name)
 }
 
 function runValidation(target: Type, value: any): boolean {
     const variableName = 'v'
     const assignment = getAssignmentCode(variableName, value)
-    const emittedValidation = getEmittedCode(variableName, target)
+    const emittedValidation = typeToJsValidator(variableName, target)
     const snippet = `${assignment};\n${emittedValidation}`
     //tslint:disable-next-line:no-eval
     const isValid: any = eval(snippet)
@@ -43,7 +41,7 @@ function runValidation(target: Type, value: any): boolean {
 
 test('basic number validator', () => {
     const target = new PrimitiveType(PrimitiveTypes.number)
-    const emitted = getEmittedCode('n', target)
+    const emitted = typeToJsValidator('n', target)
     expect(emitted).toBe("typeof n === 'number'")
 })
 

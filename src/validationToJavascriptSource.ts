@@ -11,21 +11,22 @@ import {
     PrimitiveStringValidation,
     PropertyValidation, RecursiveValidation,
     ReferencableValidation,
-    SomeRequiredValidation, ValidationVisitor,
+    SomeRequiredValidation, Validation, ValidationVisitor,
 } from './validation'
 
 import {checkNotNil, fail} from './errors'
 
 /**
- * Emit a javascript expression as a string that would implement a validator
+ * A Validation visitor that emits a javascript expression source code implementing that validation.
+ * This is, a boolean expression that would yield true if all the Validation predicate is satisfied.
  */
-export class ExpressionEmitter implements ValidationVisitor<string> {
+export class JavascriptSourceValidationVisitor implements ValidationVisitor<string> {
     private names: string[]
     private currentName: string
 
-    constructor(paramName: string) {
+    constructor(variableName: string) {
         this.names = []
-        this.currentName = paramName
+        this.currentName = variableName
     }
 
     visitCommon(c: CommonValidation): string {
@@ -131,4 +132,14 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
         const lastName = this.names.pop()
         this.currentName = checkNotNil(lastName)
     }
+}
+
+/**
+ * Emits a javascript expression that implements a validation.
+ *
+ * Just convenience function over JavascriptSourceValidationVisitor.
+ */
+export function validationToJavascriptSource(validation: Validation, variableName: string): string {
+    return validation.accept(new JavascriptSourceValidationVisitor(variableName))
+
 }

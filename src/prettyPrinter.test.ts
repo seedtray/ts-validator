@@ -1,7 +1,7 @@
 //tslint:disable-next-line:missing-jsdoc no-implicit-dependencies no-import-side-effect
 import 'jest'
 
-import {unindent} from './testUtils'
+import {unindent} from './stringUtils'
 import {TypePrettyPrinter} from './typePrettyPrinter'
 import {
     ArrayType,

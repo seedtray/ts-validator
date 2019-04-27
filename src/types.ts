@@ -57,6 +57,7 @@ export const stringType = new PrimitiveType(PrimitiveTypes.string)
 export const booleanType = new PrimitiveType(PrimitiveTypes.boolean)
 export const nullType = new PrimitiveType(PrimitiveTypes.null)
 export const undefinedType = new PrimitiveType(PrimitiveTypes.undefined)
+export const nullableType = (target: Type) => UnionType.Of([nullType, target])
 
 export class ObjectType implements Type {
     properties: Map<string, Type>
@@ -75,7 +76,7 @@ export class ObjectType implements Type {
     }
 
     addProperty(name: string, target: Type): this {
-        checkArgument('name', !this.properties.has(name))
+        checkArgument(!this.properties.has(name))
         this.properties.set(name, target)
 
         return this
@@ -164,7 +165,7 @@ export class EnumType implements Type {
     }
 
     add(name: string, value: string | number): this {
-        checkArgument('name', !this.members.has(name))
+        checkArgument(!this.members.has(name))
         this.members.set(name, value)
 
         return this

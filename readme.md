@@ -131,7 +131,7 @@ of [Type](src/types.ts).
 
 2- Given a type object, visit it's structre and generate a logical [validation](src/validation.ts) tree.
 
-3- Given a logical validation, [emit](src/expressionEmitter.ts) an expression
+3- Given a logical validation, [emit](src/javascriptSourceValidationVisitor.ts) an expression
 that validates the source type.
 
 Also there's a type pretty printer, mostly for figuring out if the type

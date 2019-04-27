@@ -30,3 +30,9 @@ export function unindent(text: string): string {
 
     return toUnindent.map(line => line.replace(trimWhitespace, '')).join('\n')
 }
+
+export function capitalize(name: string): string {
+    checkArgument(name.length > 0)
+
+    return name[0].toUpperCase() + name.slice(1)
+}

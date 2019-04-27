@@ -16,14 +16,10 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
-    "moduleDirectories": [
-      "src",
-      "node_modules"
-    ],
     "testPathIgnorePatterns": [
       "<rootDir>/build/"
     ],
-    "testRegex": ".*\\.test\\.ts",
+    "testRegex": ".*\\.test\\.ts$",
     "moduleFileExtensions": [
       "ts",
       "tsx",

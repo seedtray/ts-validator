@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`emit validator for null 1`] = `
+"function isNull(value: unknown): value is Null {
+    return value === null
+}"
+`;
+
+exports[`emit validator for null 2`] = `
+"export function isNull(value: unknown): value is Null {
+    return value === null
+}"
+`;
+
+exports[`emit validator for reasonably complicated object type 1`] = `
+"function isLead(value: unknown): value is Lead {
+    return ((Object(value) === value) && ((typeof value.name === 'string'
+&& (value.address === null
+|| typeof value.address === 'string')
+&& (value.kind === \\"business\\"
+|| value.kind === \\"person\\"))))
+}"
+`;

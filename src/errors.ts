@@ -1,9 +1,9 @@
 /**
  * A small set of precondition checking functions for better expressing intent on an assertion.
  */
-export function checkArgument(argument: string, expr: boolean): void {
+export function checkArgument(expr: boolean, msg: string = 'Invalid argument'): void {
     if (!expr) {
-        throw new Error(`Invalid argument ${argument}`)
+        throw new Error(msg)
     }
 }
 
