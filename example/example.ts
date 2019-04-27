@@ -29,8 +29,9 @@ export interface CompoundObject {
     c: SimpleObject,
 }
 
-export type SimpleArray = Array<number>
+export type SimpleArray = number[]
 
+//tslint:disable-next-line:array-type
 export type NestedArray = Array<Array<number>>
 
 interface Recursive1 {
@@ -63,7 +64,7 @@ interface ComposeWithRecursive {
 
 interface WithAnonymous {
     t: {
-        another: boolean,
-        prop: number,
+        another: boolean;
+        prop: number;
     }
 }

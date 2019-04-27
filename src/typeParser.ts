@@ -4,7 +4,7 @@
  */
 import * as ts from 'typescript'
 
-import {assert, checkNotNil, checkState, fail, isNil} from './errors'
+import {checkNotNil, checkState, fail, isNil} from './errors'
 import {
     booleanType,
     IntersectionType,
@@ -22,6 +22,8 @@ import {
     undefinedType,
     UnionType,
 } from './types'
+
+//tslint:disable:completed-docs
 
 interface TypeLocator {
     find(filename: string, typeName: string): ts.Node | undefined
@@ -245,7 +247,7 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
                 mapped.addProperty(property.name, mappedType)
             }
         }
-        //TODO: resolve module path
+        // TODO: resolve module path
 
         return NamedType.Of(
             this.checker.typeToString(tsType), 'unknown', true, mapped

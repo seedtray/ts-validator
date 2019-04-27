@@ -18,6 +18,8 @@ import {
     UnionType,
 } from './types'
 
+//tslint:disable:completed-docs
+
 export interface Validation {
     accept<T>(visitor: ValidationVisitor<T>): T
 }
@@ -219,8 +221,10 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
             new AllRequiredValidation(
                 [
                     new CommonValidation(CommonValidations.isArray),
-                    new PropertyValidation('length',
-                                           new PrimitiveNumberValidation(t.target.length)),
+                    new PropertyValidation(
+                        'length',
+                        new PrimitiveNumberValidation(t.target.length)
+                    ),
                 ]),
             new AllRequiredValidation(elementValidations),
         )
@@ -252,18 +256,18 @@ export class ValidationGenerator implements TypeVisitor<Validation> {
 
     private getCommonValidations(primitiveType: PrimitiveTypes): CommonValidations {
         switch (primitiveType) {
-        case 'number':
-            return CommonValidations.isNumber
-        case 'boolean':
-            return CommonValidations.isBoolean
-        case 'null':
-            return CommonValidations.isNull
-        case 'undefined':
-            return CommonValidations.isUndefined
-        case 'string':
-            return CommonValidations.isString
-        default:
-            return fail()
+            case 'number':
+                return CommonValidations.isNumber
+            case 'boolean':
+                return CommonValidations.isBoolean
+            case 'null':
+                return CommonValidations.isNull
+            case 'undefined':
+                return CommonValidations.isUndefined
+            case 'string':
+                return CommonValidations.isString
+            default:
+                return fail()
         }
     }
 

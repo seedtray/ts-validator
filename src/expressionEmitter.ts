@@ -1,8 +1,3 @@
-import {TypeVisitor} from './types'
-
-/**
- * Visitor that emits a validator as a js expression source code.
- */
 import {
     AllRequiredValidation,
     ArrayElementsValidation,
@@ -21,6 +16,9 @@ import {
 
 import {checkNotNil, fail} from './errors'
 
+/**
+ * Emit a javascript expression as a string that would implement a validator
+ */
 export class ExpressionEmitter implements ValidationVisitor<string> {
     private names: string[]
     private currentName: string
@@ -33,22 +31,22 @@ export class ExpressionEmitter implements ValidationVisitor<string> {
     visitCommon(c: CommonValidation): string {
         const value = this.currentName
         switch (c.kind) {
-        case CommonValidations.isArray:
-            return `Array.isArray(${value})`
-        case CommonValidations.isObject:
-            return `Object(${value}) === ${this.currentName}`
-        case CommonValidations.isNull:
-            return `${value} === null`
-        case CommonValidations.isUndefined:
-            return `${value} === undefined`
-        case CommonValidations.isNumber:
-            return `typeof ${value} === 'number'`
-        case CommonValidations.isString:
-            return `typeof ${value} === 'string'`
-        case CommonValidations.isBoolean:
-            return `typeof ${value} === 'boolean'`
-        default:
-            return fail()
+            case CommonValidations.isArray:
+                return `Array.isArray(${value})`
+            case CommonValidations.isObject:
+                return `Object(${value}) === ${this.currentName}`
+            case CommonValidations.isNull:
+                return `${value} === null`
+            case CommonValidations.isUndefined:
+                return `${value} === undefined`
+            case CommonValidations.isNumber:
+                return `typeof ${value} === 'number'`
+            case CommonValidations.isString:
+                return `typeof ${value} === 'string'`
+            case CommonValidations.isBoolean:
+                return `typeof ${value} === 'boolean'`
+            default:
+                return fail()
         }
     }
 

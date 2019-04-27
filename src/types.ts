@@ -3,6 +3,8 @@
  */
 import {checkArgument, checkNotNil, checkState, isNil} from './errors'
 
+//tslint:disable:completed-docs
+
 export enum PrimitiveTypes {
     number = 'number',
     boolean = 'boolean',
@@ -255,6 +257,7 @@ export class NamedType implements TypeName, Type {
                 readonly target: Type) {
 
     }
+
     static Of(name: string, modulePath: string, isExported: boolean, target: Type): NamedType {
         return new NamedType(name, modulePath, isExported, target)
     }

@@ -36,6 +36,7 @@
         "singleline": "never"
       }
     ],
+    "prefer-array-literal": [true, {"allow-type-parameters": true}],
     "prefer-type-cast": false,
     "array-type": [
       true,

@@ -23,7 +23,7 @@ export function checkState(stateExpr: boolean): void {
 
 export function assert(expr: boolean): expr is true {
     if (!expr) {
-        throw new Error(`Invalid state`)
+        throw new Error(`Assertion failed`)
     }
 
     return true

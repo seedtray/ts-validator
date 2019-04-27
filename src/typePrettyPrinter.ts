@@ -19,6 +19,9 @@ import {
 
 import {checkNotNil, fail, isNil} from './errors'
 
+/**
+ * A prettified type fragment that fits in a single line.
+ */
 export class PrettyInline {
 
     constructor(public expression: string) {
@@ -45,6 +48,9 @@ export class PrettyInline {
     }
 }
 
+/**
+ * A prettified block of text for representing a type.
+ */
 export class PrettyBlock {
     constructor(public opening: PrettyInline, public parts: PrettyType[], public end: PrettyInline) {
 
@@ -73,6 +79,9 @@ export class PrettyBlock {
 
 type PrettyType = PrettyInline | PrettyBlock
 
+/**
+ * Transform a parsed type to a pretty printed version of it.
+ */
 export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
     private visitedRecursiveStack: Type[]
 
@@ -106,40 +115,43 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
     }
 
     visitUnion(u: UnionType): PrettyType {
-        return this.prettyListOfTypes(u.target,
-                                      parts =>
-                                          new PrettyInline(parts.map(part => part.expression).join(' | ')),
-                                      parts => new PrettyBlock(
-                                          new PrettyInline('Union('),
-                                          parts,
-                                          new PrettyInline(')')
-                                      )
+        return this.prettyListOfTypes(
+            u.target,
+            parts =>
+                new PrettyInline(parts.map(part => part.expression).join(' | ')),
+            parts => new PrettyBlock(
+                new PrettyInline('Union('),
+                parts,
+                new PrettyInline(')')
+            )
         )
     }
 
     visitIntersection(i: IntersectionType): PrettyType {
-        return this.prettyListOfTypes(i.target,
-                                      parts =>
-                                          new PrettyInline(parts.map(part => part.expression).join(' & ')),
-                                      parts => new PrettyBlock(
-                                          new PrettyInline('Intersection('),
-                                          parts,
-                                          new PrettyInline(')')
-                                      )
+        return this.prettyListOfTypes(
+            i.target,
+            parts =>
+                new PrettyInline(parts.map(part => part.expression).join(' & ')),
+            parts => new PrettyBlock(
+                new PrettyInline('Intersection('),
+                parts,
+                new PrettyInline(')')
+            )
         )
     }
 
     visitTuple(t: TupleType): PrettyType {
-        return this.prettyListOfTypes(t.target,
-                                      parts => PrettyInline.joinSurround(
-                                          parts.map(part => part.expression),
-                                          ', ', '[', ']'
-                                      ),
-                                      parts => new PrettyBlock(
-                                          new PrettyInline('Union('),
-                                          parts,
-                                          new PrettyInline(')')
-                                      )
+        return this.prettyListOfTypes(
+            t.target,
+            parts => PrettyInline.joinSurround(
+                parts.map(part => part.expression),
+                ', ', '[', ']'
+            ),
+            parts => new PrettyBlock(
+                new PrettyInline('Union('),
+                parts,
+                new PrettyInline(')')
+            )
         )
 
     }
@@ -173,6 +185,7 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
         this.visitedRecursiveStack.push(target)
         const prettified = ref.getTarget().accept(this)
         this.visitedRecursiveStack.pop()
+
         return prettified
     }
 
