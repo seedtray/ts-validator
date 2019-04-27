@@ -4,6 +4,7 @@
     "tslint-microsoft-contrib"
   ],
   "rules": {
+    "no-null-keyword": false,
     "no-relative-imports": ["allow-siblings"],
     "interface-name": false,
     "quotemark": [true, "single", "avoid-escape"],
@@ -21,7 +22,7 @@
     ],
     "promise-function-async": false,
     "no-any": false,
-    "export-name": [true, {"ignore-case": true}],
+    "export-name": false,
     "no-parameter-properties": false,
     "trailing-comma": [
       true,
