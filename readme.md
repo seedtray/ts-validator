@@ -1,3 +1,4 @@
+![Build status](https://travis-ci.com/seedtray/ts-validator.svg?branch=master)
 ## Goal
 ts-validator aims to provide runtime validation for value objects.
 
