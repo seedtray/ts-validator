@@ -4,3 +4,4 @@ archived/
 build/
 .idea/
 yarn-error.log
+coverage/
