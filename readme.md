@@ -1,10 +1,12 @@
-![Build status](https://travis-ci.com/seedtray/ts-validator.svg?branch=master)
+[![Build status](https://travis-ci.com/seedtray/ts-validator.svg?branch=master)](https://travis-ci.com/seedtray/ts-validator)
+[![Coverage Status](https://coveralls.io/repos/github/seedtray/ts-validator/badge.svg)](https://coveralls.io/github/seedtray/ts-validator)
+
 ## Goal
-ts-validator aims to provide runtime validation for value objects.
+ts-validator provides runtime Typescript validations for value objects.
 
 In other words, given a type definition `T`, provide the implementation for
 ```typescript
-(value: any) => value is T
+(value: unknown) => value is T
 ```
 
 ### Example:
@@ -20,11 +22,12 @@ interface Customer {
 }
 ```
 
-We aim to generate something equivalent to:
+ts-validator will generate source code for an implementation, which you can then call within
+your application for ensuring a runtime value conforms to the Customer interface.
 
 ```typescript
 
-function isCustomer(value: any): value is Customer {
+function isCustomer(value: unknown): value is Customer {
     return (
         (Object(value) === value) && (
             typeof value.name === 'string' && 
@@ -43,7 +46,7 @@ function isCustomer(value: any): value is Customer {
 ```
 ### What kind of values can we expect to validate with this?
 
-We aim to *validate the intersection of what ts types can denote
+We aim to *validate the intersection of what ts types can constrain
 and the values that json can express*.
 
 This doesn't mean you can only validate interfaces of primitive values and
@@ -56,10 +59,11 @@ arrays of these. You can validate:
 
 ### Why is this useful?
 
-There are many scenarios where a TypeScript function handles values that were generated without type checking. The two main ones are:
+There are many scenarios where a TypeScript function consumes values that were generated without 
+type checking. The two main ones are:
 
 - javascript libraries, usually annotated via declaration `.d.ts` files.
-- values coming from schemaless serialization, such as the network or a 
+- values coming from schema-less serialization, such as the network or a 
 database.
 
 For those sources, we have no guards for values not conforming to the types
@@ -86,7 +90,8 @@ validated.
 Probably you already wrote the type definition for which you need a validator, 
 so it makes sense to reuse it and leverage the current tools you're using.
 Even if json-schema can express more elaborate value restrictions, we think 
-there's little gain on those. Specially because the main benefit of types are the tools that can warn developers about possible mistakes at build/edit time.
+there's little gain on those. Specially because the main benefit of types are the tools that 
+can warn developers about possible mistakes at build/edit time.
 
 Validating that numbers are in a certain range, or that a string is
 a valid email, falls outside the scope for this level of validation. This is 
@@ -124,16 +129,14 @@ The type in the source file must be exported
 
 ## Current Implementation
 
-It's a 3 pass over a typescript type:
+Consists on 3 passes over a typescript type:
 
 1- Use the typecsript compiler to 
 [extract the type information](src/typeParser.ts) and build an instance 
 of [Type](src/types.ts). 
 
-2- Given a type object, visit it's structre and generate a logical [validation](src/validation.ts) tree.
+2- Given a type object, visit it's structre and [generate](src/typeToValidation.ts) a logical 
+[validation](src/validation.ts) tree.
 
-3- Given a logical validation, [emit](src/javascriptSourceValidationVisitor.ts) an expression
-that validates the source type.
-
-Also there's a type pretty printer, mostly for figuring out if the type
-design made sense.
+3- Given a logical validation, [emit](src/functionEmitter.ts) source code that would
+validates the source type.
