@@ -7,8 +7,10 @@ import * as ts from 'typescript'
 import * as winston from 'winston'
 
 import {isNil} from '../errors'
+import {FunctionEmitter} from '../functionEmitter'
 import {SimpleFileLocator, TypeMapper} from '../typeParser'
 import {TypePrettyPrinter} from '../typePrettyPrinter'
+import {NamedType} from '../types'
 import {typeToValidation} from '../typeToValidation'
 import {validationToJavascriptSource} from '../validationToJavascriptSource'
 
@@ -29,12 +31,12 @@ function main(): void {
     }
     const typeOfNode = program.getTypeChecker().getTypeAtLocation(node)
     const mapper = new TypeMapper(program)
-    const validationType = mapper.resolve(typeOfNode)
-    const formatted = validationType.accept(new TypePrettyPrinter()).toString()
-    process.stdout.write(`${formatted}\n`)
-    const validation = typeToValidation(validationType)
-    const validationExpression = validationToJavascriptSource(validation, 'value')
-    process.stdout.write(`${validationExpression}\n`)
+
+    // probably mapper.resolve should return a NamedType since it all starts with a name.
+    const typeToValidate = mapper.resolve(typeOfNode) as any as NamedType
+    const functionEmitter = new FunctionEmitter()
+    const validationFunctionSource = functionEmitter.typeToFunctionSource(typeToValidate)
+    process.stdout.write(validationFunctionSource + '\n')
 }
 
 main()
