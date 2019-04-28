@@ -24,15 +24,15 @@ import {checkNotNil, fail, isNil} from './errors'
  */
 export class PrettyInline {
 
-    constructor(public expression: string) {
-    }
-
     static joinSurround(parts: string[],
                         joiner: string,
                         prefix: string = '',
                         suffix: string = ''): PrettyInline {
 
         return new PrettyInline(prefix + parts.join(joiner) + suffix)
+    }
+
+    constructor(public expression: string) {
     }
 
     toLines(indent: number): string {

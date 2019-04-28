@@ -1,6 +1,6 @@
 import {NamedType} from './types'
 
-//tslint:disable:completed-docs
+// tslint:disable:completed-docs
 
 export interface Validation {
     accept<T>(visitor: ValidationVisitor<T>): T

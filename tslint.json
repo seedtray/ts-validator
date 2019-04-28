@@ -1,7 +1,6 @@
 {
   "extends": [
-    "tslint:latest",
-    "tslint-microsoft-contrib"
+    "tslint:latest"
   ],
   "rules": {
     "no-null-keyword": false,
@@ -10,11 +9,6 @@
     "quotemark": [true, "single", "avoid-escape"],
     "semicolon": false,
     "member-access": [true, "no-public"],
-    "import-name": [
-      true, {
-        "momentTimezone": "moment"
-      }
-    ],
     "newline-per-chained-call": false,
     "max-classes-per-file": [
       false,
@@ -24,6 +18,9 @@
     "no-any": false,
     "export-name": false,
     "no-parameter-properties": false,
+    "object-literal-sort-keys": false,
+    "arrow-parens": [true, "ban-single-arg-parens"],
+    "member-ordering": [true, {"order": "statics-first"}],
     "trailing-comma": [
       true,
       {
@@ -36,13 +33,11 @@
         "singleline": "never"
       }
     ],
-    "prefer-array-literal": [true, {"allow-type-parameters": true}],
     "prefer-type-cast": false,
     "array-type": [
       true,
       "array-simple"
     ],
-    "function-name": [true, {"static-method-regex": "[A-Z][a-zA-Z0-9]+"}],
     "typedef": [
       true,
       "call-signature",

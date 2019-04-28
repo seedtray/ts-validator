@@ -3,7 +3,7 @@
  */
 import {checkArgument, checkNotNil, checkState, isNil} from './errors'
 
-//tslint:disable:completed-docs
+// tslint:disable:completed-docs
 
 export enum PrimitiveTypes {
     number = 'number',
@@ -60,12 +60,6 @@ export const undefinedType = new PrimitiveType(PrimitiveTypes.undefined)
 export const nullableType = (target: Type) => UnionType.Of([nullType, target])
 
 export class ObjectType implements Type {
-    properties: Map<string, Type>
-
-    constructor() {
-        this.properties = new Map()
-    }
-
     static Of(spec: { [name: string]: Type }): ObjectType {
         const target = new ObjectType()
         for (const property of Object.getOwnPropertyNames(spec)) {
@@ -73,6 +67,12 @@ export class ObjectType implements Type {
         }
 
         return target
+    }
+
+    properties: Map<string, Type>
+
+    constructor() {
+        this.properties = new Map()
     }
 
     addProperty(name: string, target: Type): this {
@@ -88,12 +88,12 @@ export class ObjectType implements Type {
 }
 
 export class ArrayType implements Type {
-    constructor(public target: Type) {
-
-    }
-
     static Of(target: Type): ArrayType {
         return new ArrayType(target)
+    }
+
+    constructor(public target: Type) {
+
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -178,11 +178,11 @@ export class EnumType implements Type {
 
 export class LiteralStringType implements Type {
 
-    constructor(public value: string) {
-    }
-
     static Of(value: string): LiteralStringType {
         return new LiteralStringType(value)
+    }
+
+    constructor(public value: string) {
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -193,11 +193,11 @@ export class LiteralStringType implements Type {
 
 export class LiteralNumberType implements Type {
 
-    constructor(public value: number) {
-    }
-
     static Of(value: number): LiteralNumberType {
         return new LiteralNumberType(value)
+    }
+
+    constructor(public value: number) {
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -208,11 +208,11 @@ export class LiteralNumberType implements Type {
 
 export class LiteralBooleanType implements Type {
 
-    constructor(public value: boolean) {
-    }
-
     static Of(value: boolean): LiteralBooleanType {
         return new LiteralBooleanType(value)
+    }
+
+    constructor(public value: boolean) {
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -221,14 +221,14 @@ export class LiteralBooleanType implements Type {
 }
 
 export class RecursiveReferenceType implements Type {
+    static Of(target: NamedType): RecursiveReferenceType {
+        return new RecursiveReferenceType(target)
+    }
+
     private target: NamedType | null
 
     constructor(target: NamedType | null) {
         this.target = target
-    }
-
-    static Of(target: NamedType): RecursiveReferenceType {
-        return new RecursiveReferenceType(target)
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {
@@ -252,15 +252,15 @@ export interface TypeName {
 }
 
 export class NamedType implements TypeName, Type {
+    static Of(name: string, modulePath: string, isExported: boolean, target: Type): NamedType {
+        return new NamedType(name, modulePath, isExported, target)
+    }
+
     constructor(readonly name: string,
                 readonly modulePath: string,
                 readonly isExported: boolean,
                 readonly target: Type) {
 
-    }
-
-    static Of(name: string, modulePath: string, isExported: boolean, target: Type): NamedType {
-        return new NamedType(name, modulePath, isExported, target)
     }
 
     accept<T>(visitor: TypeVisitor<T>): T {

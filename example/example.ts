@@ -31,7 +31,7 @@ export interface CompoundObject {
 
 export type SimpleArray = number[]
 
-//tslint:disable-next-line:array-type
+// tslint:disable-next-line:array-type
 export type NestedArray = Array<Array<number>>
 
 interface Recursive1 {

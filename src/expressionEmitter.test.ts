@@ -32,7 +32,7 @@ function runValidation(target: Type, value: any): boolean {
     const assignment = getAssignmentCode(variableName, value)
     const emittedValidation = typeToJsValidator(variableName, target)
     const snippet = `${assignment};\n${emittedValidation}`
-    //tslint:disable-next-line:no-eval
+    // tslint:disable-next-line:no-eval
     const isValid: any = eval(snippet)
     checkState(typeof isValid === 'boolean')
 

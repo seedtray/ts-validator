@@ -1,4 +1,4 @@
-//tslint:disable-next-line:missing-jsdoc no-implicit-dependencies no-import-side-effect
+// tslint:disable-next-line:missing-jsdoc no-implicit-dependencies no-import-side-effect
 import 'jest'
 
 import {unindent} from './stringUtils'

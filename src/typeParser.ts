@@ -23,7 +23,7 @@ import {
     UnionType,
 } from './types'
 
-//tslint:disable:completed-docs
+// tslint:disable:completed-docs
 
 interface TypeLocator {
     find(filename: string, typeName: string): ts.Node | undefined
@@ -195,7 +195,7 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
         }
     }
 
-    //tslint:disable:no-bitwise
+    // tslint:disable:no-bitwise
     private safeStepMap(tsType: ts.Type, stack: TypeStack): Type {
         if (tsType.flags & ts.TypeFlags.Null) {
             return nullType
@@ -247,7 +247,6 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
                 mapped.addProperty(property.name, mappedType)
             }
         }
-        // TODO: resolve module path
 
         return NamedType.Of(
             this.checker.typeToString(tsType), 'unknown', true, mapped
@@ -327,5 +326,5 @@ export class TypeMapper implements TypescriptTypeToValidatorType {
 
     }
 
-    //tslint:enable:no-bitwise
+    // tslint:enable:no-bitwise
 }
