@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`pretty nested objects 1`] = `
+"{
+  a: number
+  b: [number, string]
+  ot2: {
+    o2: null
+  }
+  at: Array<{
+    o2: null
+  }>
+}"
+`;
+
+exports[`pretty prints enums 1`] = `
+"Enum(
+  test=1,
+  another=2,
+  aString='test',
+)"
+`;
+
+exports[`pretty prints simple objects 1`] = `
+"{
+  a: number
+  b: [number, string]
+}"
+`;
+
+exports[`pretty recursive types 1`] = `
+"{ [CompositionWithRecursive]
+  t: { [Recursive33]
+    d: { [Recursive31]
+      a: { [Recursive32]
+        b: RecursiveReference<Recursive32>
+        c: RecursiveReference<Recursive33>
+      }
+    }
+  }
+}"
+`;
