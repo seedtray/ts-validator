@@ -41,9 +41,7 @@ export class TypeParser {
         const node = checkNotNil(this.find(filename, typeName))
         const tsType = checker.getTypeAtLocation(node)
         const mappedType = this.mapper.resolve(tsType)
-        return NamedType.Of(
-            checker.typeToString(tsType), filename, true, mappedType
-        )
+        return NamedType.Of(typeName, filename, true, mappedType)
     }
 
     private find(filename: string, lookupName: string): ts.Node | undefined {

@@ -66,3 +66,16 @@ test('types are equal to themselves, but not equal to other types or different d
         }
     }
 )
+
+test('Intersection and union types are equal disregarding their parts order', () => {
+    expect(
+        UnionType.Of([stringType, numberType]).equalDeclaration(
+            UnionType.Of([numberType, stringType])
+        )
+    ).toBe(true)
+    expect(
+        IntersectionType.Of([stringType, numberType]).equalDeclaration(
+            IntersectionType.Of([numberType, stringType])
+        )
+    ).toBe(true)
+})

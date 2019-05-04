@@ -35,3 +35,15 @@ test('custom comparison determines equality', () => {
         expect(Arrays.equal([{a: 10, b: 20}], [{a: 20, b: 20}], projectionEq)).toBe(false)
     }
 )
+
+test('isPermutation is true for the same array', () => {
+    expect(Arrays.isPermutation([1, 2, 3], [1, 2, 3], cmp)).toBe(true)
+})
+
+test('isPermutation is true for the reverse order', () => {
+    expect(Arrays.isPermutation([1, 2, 3], [3, 2, 1], cmp)).toBe(true)
+})
+
+test('isPermutation is false if they have different elements', () => {
+    expect(Arrays.isPermutation([1, 2, 3], [3, 2, 4], cmp)).toBe(false)
+})

@@ -52,6 +52,10 @@ export interface Type {
      * type BEQ = B1 & A1 & A2
      *
      * B and BEQ are the same types, but declared differently. this method doesn't capture that.
+     *
+     * We do, however, for intersection and union types, consider them equal regardless
+     * of their parts order. This is due to the ts compiler not being consistent (it doesn't need
+     * to) when parsing these types, and we need a useful comparison against those parsed types.
      */
     equalDeclaration(other: Type): boolean
 }
@@ -154,11 +158,12 @@ abstract class ListOfTypes {
         return this
     }
 
-    protected equal(other: Type): boolean {
-        return (
-            other instanceof ListOfTypes &&
-            Arrays.equal(this.target, other.target, (t1, t2) => t1.equalDeclaration(t2))
-        )
+    protected equalSameOrder(other: ListOfTypes): boolean {
+        return Arrays.equal(this.target, other.target, (t1, t2) => t1.equalDeclaration(t2))
+    }
+
+    protected isPermutation(other: ListOfTypes): boolean {
+        return Arrays.isPermutation(this.target, other.target, (t1, t2) => t1.equalDeclaration(t2))
     }
 
 }
@@ -175,7 +180,7 @@ export class UnionType extends ListOfTypes implements Type {
     }
 
     equalDeclaration(other: Type): boolean {
-        return other instanceof UnionType && super.equal(other)
+        return other instanceof UnionType && super.isPermutation(other)
     }
 }
 
@@ -191,7 +196,7 @@ export class IntersectionType extends ListOfTypes implements Type {
     }
 
     equalDeclaration(other: Type): boolean {
-        return other instanceof IntersectionType && super.equal(other)
+        return other instanceof IntersectionType && super.isPermutation(other)
     }
 
 }
@@ -206,7 +211,7 @@ export class TupleType extends ListOfTypes implements Type {
     }
 
     equalDeclaration(other: Type): boolean {
-        return other instanceof TupleType && super.equal(other);
+        return other instanceof TupleType && super.equalSameOrder(other);
     }
 }
 
