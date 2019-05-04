@@ -2,7 +2,7 @@
   "include": [
     "src/**/*.ts"
   ],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "build"],
   "compilerOptions": {
     "target": "es6",
     "module": "es6",

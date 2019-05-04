@@ -10,7 +10,6 @@ import {
     ObjectType,
     PrimitiveType,
     PrimitiveTypes,
-    RecursiveReferenceType,
     TupleType,
     Type,
     TypeVisitor,
@@ -28,7 +27,6 @@ import {
     PrimitiveNumberValidation,
     PrimitiveStringValidation,
     PropertyValidation,
-    RecursiveValidation,
     ReferencableValidation,
     SomeRequiredValidation,
     Validation,
@@ -97,10 +95,6 @@ export class TypeToValidationVisitor implements TypeVisitor<Validation> {
 
     visitLiteralBoolean(literal: LiteralBooleanType): Validation {
         return new PrimitiveBooleanValidation(literal.value)
-    }
-
-    visitRecursiveReference(ref: RecursiveReferenceType): Validation {
-        return new RecursiveValidation(ref.getTarget())
     }
 
     visitNamedType(udt: NamedType): Validation {

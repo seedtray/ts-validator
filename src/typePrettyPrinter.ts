@@ -10,14 +10,13 @@ import {
     LiteralStringType, NamedType,
     ObjectType,
     PrimitiveType,
-    RecursiveReferenceType,
     TupleType,
     Type,
     TypeVisitor,
     UnionType,
 } from './types'
 
-import {checkNotNil, fail, isNil} from './errors'
+import {fail} from './errors'
 
 /**
  * A prettified type fragment that fits in a single line.
@@ -83,11 +82,6 @@ type PrettyType = PrettyInline | PrettyBlock
  * Transform a parsed type to a pretty printed version of it.
  */
 export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
-    private visitedRecursiveStack: Type[]
-
-    constructor() {
-        this.visitedRecursiveStack = []
-    }
 
     visitPrimitive(p: PrimitiveType): PrettyType {
         return new PrettyInline(p.target)
@@ -174,19 +168,6 @@ export class TypePrettyPrinter implements TypeVisitor<PrettyType> {
 
     visitLiteralBoolean(literal: LiteralBooleanType): PrettyType {
         return new PrettyInline(`'${literal.value}'`)
-    }
-
-    visitRecursiveReference(ref: RecursiveReferenceType): PrettyType {
-        const name = checkNotNil(ref.getTarget().name, 'expected recursive type to have a name')
-        const target = ref.getTarget()
-        if (!isNil(this.visitedRecursiveStack.find(t => t === target))) {
-            return new PrettyInline(`RecursiveReference<${name}>`)
-        }
-        this.visitedRecursiveStack.push(target)
-        const prettified = ref.getTarget().accept(this)
-        this.visitedRecursiveStack.pop()
-
-        return prettified
     }
 
     visitNamedType(t: NamedType): PrettyType {

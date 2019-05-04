@@ -11,7 +11,6 @@ import {
     nullType,
     numberType,
     ObjectType,
-    RecursiveReferenceType,
     stringType,
     TupleType,
     undefinedType,
@@ -70,20 +69,4 @@ test('pretty nested objects', () => {
         at: ArrayType.Of(nested),
     })
     expect(ot.accept(pp).toString()).toMatchSnapshot()
-})
-
-test('pretty recursive types', () => {
-    const rec32 = new RecursiveReferenceType(null)
-    const rec31 = RecursiveReferenceType.Of(
-        NamedType.Of('Recursive31', 'test', true, ObjectType.Of({a: rec32}))
-    )
-    const rec33 = RecursiveReferenceType.Of(
-        NamedType.Of('Recursive33', 'test', true, ObjectType.Of({d: rec31}))
-    )
-    rec32.resolve(NamedType.Of('Recursive32', 'test', true, ObjectType.Of({b: rec32, c: rec33})))
-
-    const rec1 = RecursiveReferenceType.Of(
-        NamedType.Of('CompositionWithRecursive', 'test', true, ObjectType.Of({t: rec33}))
-    )
-    expect(rec1.accept(pp).toString()).toMatchSnapshot()
 })

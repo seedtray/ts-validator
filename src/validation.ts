@@ -118,16 +118,6 @@ export class EnumValueValidation implements Validation {
     }
 }
 
-export class RecursiveValidation implements Validation {
-    constructor(readonly ref: NamedType) {
-
-    }
-
-    accept<T>(visitor: ValidationVisitor<T>): T {
-        return visitor.visitRecursiveValidation(this)
-    }
-}
-
 export class ReferencableValidation implements Validation {
     constructor(readonly target: NamedType, readonly validation: Validation) {
 
@@ -160,8 +150,6 @@ export interface ValidationVisitor<T> {
     visitPrimitiveBoolean(p: PrimitiveBooleanValidation): T
 
     visitEnum(e: EnumValueValidation): T
-
-    visitRecursiveValidation(r: RecursiveValidation): T
 
     visitReferencableValidation(r: ReferencableValidation): T
 }
