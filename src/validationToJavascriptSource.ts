@@ -9,9 +9,11 @@ import {
     PrimitiveBooleanValidation,
     PrimitiveNumberValidation,
     PrimitiveStringValidation,
-    PropertyValidation, RecursiveValidation,
+    PropertyValidation,
     ReferencableValidation,
-    SomeRequiredValidation, Validation, ValidationVisitor,
+    SomeRequiredValidation,
+    Validation,
+    ValidationVisitor,
 } from './validation'
 
 import {checkNotNil, fail} from './errors'
@@ -71,7 +73,7 @@ export class JavascriptSourceValidationVisitor implements ValidationVisitor<stri
         const validator = a.validator.accept(this)
         this.popName()
 
-        return `Array.every(element => ${validator}, ${this.currentName})`
+        return `${this.currentName}.every(element => ${validator})`
     }
 
     visitAllRequired(a: AllRequiredValidation): string {
@@ -112,11 +114,6 @@ export class JavascriptSourceValidationVisitor implements ValidationVisitor<stri
 
     visitEnum(e: EnumValueValidation): string {
         return fail('not implemented')
-    }
-
-    visitRecursiveValidation(r: RecursiveValidation): string {
-        return 'true'
-        // return fail("Expression emitter can't deal with recursive types")
     }
 
     visitReferencableValidation(r: ReferencableValidation): string {

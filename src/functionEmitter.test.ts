@@ -1,9 +1,10 @@
 import {FunctionEmitter} from './functionEmitter'
 import {
+    ArrayType,
     LiteralStringType,
     NamedType,
     nullableType,
-    nullType,
+    nullType, numberType,
     ObjectType,
     stringType,
     UnionType,
@@ -30,6 +31,18 @@ test('emit validator for reasonably complicated object type', () => {
                 LiteralStringType.Of('person'),
             ]),
         }),
+    )
+    expect(fnEmitter.typeToFunctionSource(toValidate)).toMatchSnapshot()
+})
+
+test('emit validator for Object with array of numbers', () => {
+    const toValidate = NamedType.Of(
+        'ArrayOfNumbers',
+        'unknown',
+        false,
+        ObjectType.Of({
+            scores: ArrayType.Of(numberType),
+        })
     )
     expect(fnEmitter.typeToFunctionSource(toValidate)).toMatchSnapshot()
 })

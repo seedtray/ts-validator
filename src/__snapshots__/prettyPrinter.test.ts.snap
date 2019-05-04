@@ -27,16 +27,3 @@ exports[`pretty prints simple objects 1`] = `
   b: [number, string]
 }"
 `;
-
-exports[`pretty recursive types 1`] = `
-"{ [CompositionWithRecursive]
-  t: { [Recursive33]
-    d: { [Recursive31]
-      a: { [Recursive32]
-        b: RecursiveReference<Recursive32>
-        c: RecursiveReference<Recursive33>
-      }
-    }
-  }
-}"
-`;

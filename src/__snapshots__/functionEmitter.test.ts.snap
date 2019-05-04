@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`emit validator for Object with array of numbers 1`] = `
+"function isArrayOfNumbers(value: unknown): value is ArrayOfNumbers {
+    return ((Object(value) === value) && ((((Array.isArray(value.scores)) && (value.scores.every(element => typeof element === 'number'))))))
+}"
+`;
+
 exports[`emit validator for null 1`] = `
 "function isNull(value: unknown): value is Null {
     return value === null

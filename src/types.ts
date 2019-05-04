@@ -2,6 +2,8 @@
  * Types for expressing some typescript Types, and visitor definitions for type processors.
  */
 import {checkArgument, checkNotNil, checkState, isNil} from './errors'
+import {Arrays} from './lang/arrays'
+import {Maps} from './lang/maps'
 
 // tslint:disable:completed-docs
 
@@ -34,13 +36,13 @@ export interface TypeVisitor<T> {
 
     visitLiteralBoolean(literal: LiteralBooleanType): T
 
-    visitRecursiveReference(ref: RecursiveReferenceType): T
-
     visitNamedType(t: NamedType): T
 }
 
 export interface Type {
     accept<T>(visitor: TypeVisitor<T>): T
+
+    equal(other: Type): boolean
 }
 
 export class PrimitiveType implements Type {
@@ -49,6 +51,10 @@ export class PrimitiveType implements Type {
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitPrimitive(this)
+    }
+
+    equal(other: Type): boolean {
+        return other instanceof PrimitiveType && this.target === other.target
     }
 }
 
@@ -85,6 +91,17 @@ export class ObjectType implements Type {
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitObject(this)
     }
+
+    size(): number {
+        return this.properties.size
+    }
+
+    equal(other: Type): boolean {
+        if (!(other instanceof ObjectType) || this.size() !== other.size()) {
+            return false
+        }
+        return Maps.equal(this.properties, other.properties, (t1, t2) => t1.equal(t2))
+    }
 }
 
 export class ArrayType implements Type {
@@ -98,6 +115,10 @@ export class ArrayType implements Type {
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitArray(this)
+    }
+
+    equal(other: Type): boolean {
+        return other instanceof ArrayType && this.target.equal(other.target)
     }
 }
 
@@ -121,6 +142,14 @@ abstract class ListOfTypes {
 
         return this
     }
+
+    protected equalSameOrder(other: ListOfTypes): boolean {
+        return Arrays.equal(this.target, other.target, (t1, t2) => t1.equal(t2))
+    }
+
+    protected isPermutation(other: ListOfTypes): boolean {
+        return Arrays.isPermutation(this.target, other.target, (t1, t2) => t1.equal(t2))
+    }
 }
 
 export class UnionType extends ListOfTypes implements Type {
@@ -132,6 +161,10 @@ export class UnionType extends ListOfTypes implements Type {
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitUnion(this)
+    }
+
+    equal(other: Type): boolean {
+        return other instanceof UnionType && super.isPermutation(other)
     }
 }
 
@@ -145,6 +178,11 @@ export class IntersectionType extends ListOfTypes implements Type {
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitIntersection(this)
     }
+
+    equal(other: Type): boolean {
+        return other instanceof IntersectionType && super.isPermutation(other)
+    }
+
 }
 
 export class TupleType extends ListOfTypes implements Type {
@@ -155,9 +193,22 @@ export class TupleType extends ListOfTypes implements Type {
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitTuple(this)
     }
+
+    equal(other: Type): boolean {
+        return other instanceof TupleType && super.equalSameOrder(other);
+    }
 }
 
 export class EnumType implements Type {
+    static Of(spec: { [name: string]: string | number }): EnumType {
+        const target = new EnumType()
+        for (const property of Object.getOwnPropertyNames(spec)) {
+            target.add(property, spec[property])
+        }
+
+        return target
+    }
+
     members: Map<string, string | number>
 
     constructor() {
@@ -174,6 +225,14 @@ export class EnumType implements Type {
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitEnum(this)
     }
+
+    equal(other: Type): boolean {
+        return other instanceof EnumType && Maps.equal(
+            this.members,
+            other.members,
+            (m1, m2) => m1 === m2
+        )
+    }
 }
 
 export class LiteralStringType implements Type {
@@ -187,6 +246,10 @@ export class LiteralStringType implements Type {
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitLiteralString(this)
+    }
+
+    equal(other: Type): boolean {
+        return other instanceof LiteralStringType && this.value === other.value
     }
 
 }
@@ -204,6 +267,9 @@ export class LiteralNumberType implements Type {
         return visitor.visitLiteralNumber(this)
     }
 
+    equal(other: Type): boolean {
+        return other instanceof LiteralNumberType && this.value === other.value
+    }
 }
 
 export class LiteralBooleanType implements Type {
@@ -218,30 +284,9 @@ export class LiteralBooleanType implements Type {
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitLiteralBoolean(this)
     }
-}
 
-export class RecursiveReferenceType implements Type {
-    static Of(target: NamedType): RecursiveReferenceType {
-        return new RecursiveReferenceType(target)
-    }
-
-    private target: NamedType | null
-
-    constructor(target: NamedType | null) {
-        this.target = target
-    }
-
-    accept<T>(visitor: TypeVisitor<T>): T {
-        return visitor.visitRecursiveReference(this)
-    }
-
-    getTarget(): NamedType {
-        return checkNotNil(this.target)
-    }
-
-    resolve(target: NamedType): void {
-        checkState(isNil(this.target))
-        this.target = target
+    equal(other: Type): boolean {
+        return other instanceof LiteralBooleanType && this.value === other.value
     }
 }
 
@@ -265,5 +310,13 @@ export class NamedType implements TypeName, Type {
 
     accept<T>(visitor: TypeVisitor<T>): T {
         return visitor.visitNamedType(this)
+    }
+
+    equal(other: Type): boolean {
+        return (
+            other instanceof NamedType
+            && this.name === other.name
+            && this.target.equal(other.target)
+        )
     }
 }

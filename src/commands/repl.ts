@@ -2,17 +2,11 @@
  * Simple command line script for interacting with the working parts of
  * the validator.
  */
-import * as path from 'path'
 import * as ts from 'typescript'
 import * as winston from 'winston'
 
-import {isNil} from '../errors'
 import {FunctionEmitter} from '../functionEmitter'
-import {SimpleFileLocator, TypeMapper} from '../typeParser'
-import {TypePrettyPrinter} from '../typePrettyPrinter'
-import {NamedType} from '../types'
-import {typeToValidation} from '../typeToValidation'
-import {validationToJavascriptSource} from '../validationToJavascriptSource'
+import {TypeParser} from '../typeParser'
 
 function main(): void {
     const logger = winston.createLogger()
@@ -22,18 +16,8 @@ function main(): void {
         target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS, strict: true,
     }
     const program = ts.createProgram([filename], options)
-    const locator = new SimpleFileLocator(program)
-    const node = locator.find(filename, typeName)
-    if (isNil(node)) {
-        logger.error('Type %s not found in %s', typeName, filename)
-
-        return
-    }
-    const typeOfNode = program.getTypeChecker().getTypeAtLocation(node)
-    const mapper = new TypeMapper(program)
-
-    // probably mapper.resolve should return a NamedType since it all starts with a name.
-    const typeToValidate = mapper.resolve(typeOfNode) as any as NamedType
+    const locator = new TypeParser(program)
+    const typeToValidate = locator.parseType(filename, typeName)
     const functionEmitter = new FunctionEmitter()
     const validationFunctionSource = functionEmitter.typeToFunctionSource(typeToValidate)
     process.stdout.write(validationFunctionSource + '\n')
