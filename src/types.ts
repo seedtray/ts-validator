@@ -42,7 +42,18 @@ export interface TypeVisitor<T> {
 export interface Type {
     accept<T>(visitor: TypeVisitor<T>): T
 
-    equal(other: Type): boolean
+    /**
+     * Wether two types have the same declaration.
+     * Note that two types may be equalDeclaration, but have different declarations. this only
+     * cares about the latter.
+     *
+     * type A = A1 & A2
+     * type B = B1 & A
+     * type BEQ = B1 & A1 & A2
+     *
+     * B and BEQ are the same types, but declared differently. this method doesn't capture that.
+     */
+    equalDeclaration(other: Type): boolean
 }
 
 export class PrimitiveType implements Type {
@@ -53,7 +64,7 @@ export class PrimitiveType implements Type {
         return visitor.visitPrimitive(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return other instanceof PrimitiveType && this.target === other.target
     }
 }
@@ -96,11 +107,11 @@ export class ObjectType implements Type {
         return this.properties.size
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         if (!(other instanceof ObjectType) || this.size() !== other.size()) {
             return false
         }
-        return Maps.equal(this.properties, other.properties, (t1, t2) => t1.equal(t2))
+        return Maps.equal(this.properties, other.properties, (t1, t2) => t1.equalDeclaration(t2))
     }
 }
 
@@ -117,8 +128,8 @@ export class ArrayType implements Type {
         return visitor.visitArray(this)
     }
 
-    equal(other: Type): boolean {
-        return other instanceof ArrayType && this.target.equal(other.target)
+    equalDeclaration(other: Type): boolean {
+        return other instanceof ArrayType && this.target.equalDeclaration(other.target)
     }
 }
 
@@ -143,13 +154,13 @@ abstract class ListOfTypes {
         return this
     }
 
-    protected equalSameOrder(other: ListOfTypes): boolean {
-        return Arrays.equal(this.target, other.target, (t1, t2) => t1.equal(t2))
+    protected equal(other: Type): boolean {
+        return (
+            other instanceof ListOfTypes &&
+            Arrays.equal(this.target, other.target, (t1, t2) => t1.equalDeclaration(t2))
+        )
     }
 
-    protected isPermutation(other: ListOfTypes): boolean {
-        return Arrays.isPermutation(this.target, other.target, (t1, t2) => t1.equal(t2))
-    }
 }
 
 export class UnionType extends ListOfTypes implements Type {
@@ -163,8 +174,8 @@ export class UnionType extends ListOfTypes implements Type {
         return visitor.visitUnion(this)
     }
 
-    equal(other: Type): boolean {
-        return other instanceof UnionType && super.isPermutation(other)
+    equalDeclaration(other: Type): boolean {
+        return other instanceof UnionType && super.equal(other)
     }
 }
 
@@ -179,8 +190,8 @@ export class IntersectionType extends ListOfTypes implements Type {
         return visitor.visitIntersection(this)
     }
 
-    equal(other: Type): boolean {
-        return other instanceof IntersectionType && super.isPermutation(other)
+    equalDeclaration(other: Type): boolean {
+        return other instanceof IntersectionType && super.equal(other)
     }
 
 }
@@ -194,8 +205,8 @@ export class TupleType extends ListOfTypes implements Type {
         return visitor.visitTuple(this)
     }
 
-    equal(other: Type): boolean {
-        return other instanceof TupleType && super.equalSameOrder(other);
+    equalDeclaration(other: Type): boolean {
+        return other instanceof TupleType && super.equal(other);
     }
 }
 
@@ -226,7 +237,7 @@ export class EnumType implements Type {
         return visitor.visitEnum(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return other instanceof EnumType && Maps.equal(
             this.members,
             other.members,
@@ -248,7 +259,7 @@ export class LiteralStringType implements Type {
         return visitor.visitLiteralString(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return other instanceof LiteralStringType && this.value === other.value
     }
 
@@ -267,7 +278,7 @@ export class LiteralNumberType implements Type {
         return visitor.visitLiteralNumber(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return other instanceof LiteralNumberType && this.value === other.value
     }
 }
@@ -285,7 +296,7 @@ export class LiteralBooleanType implements Type {
         return visitor.visitLiteralBoolean(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return other instanceof LiteralBooleanType && this.value === other.value
     }
 }
@@ -312,11 +323,11 @@ export class NamedType implements TypeName, Type {
         return visitor.visitNamedType(this)
     }
 
-    equal(other: Type): boolean {
+    equalDeclaration(other: Type): boolean {
         return (
             other instanceof NamedType
             && this.name === other.name
-            && this.target.equal(other.target)
+            && this.target.equalDeclaration(other.target)
         )
     }
 }

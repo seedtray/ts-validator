@@ -47,6 +47,6 @@ test('Array of numbers within an object gets properly parsed', () => {
             ObjectType.Of({scores: ArrayType.Of(numberType)})
         )
 
-        expect(parsed.equal(expected)).toBe(true)
+        expect(parsed.equalDeclaration(expected)).toBe(true)
     }
 )
