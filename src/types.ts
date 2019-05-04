@@ -211,15 +211,6 @@ export class TupleType extends ListOfTypes implements Type {
 }
 
 export class EnumType implements Type {
-    static Of(spec: { [name: string]: string | number }): EnumType {
-        const target = new EnumType()
-        for (const property of Object.getOwnPropertyNames(spec)) {
-            target.add(property, spec[property])
-        }
-
-        return target
-    }
-
     members: Map<string, string | number>
 
     constructor() {
