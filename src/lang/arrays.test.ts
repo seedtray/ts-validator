@@ -14,10 +14,12 @@ test('single element arrays are equal depending on that single element', () => {
     expect(Arrays.equal([e1], [e2], cmp)).toBe(false)
     expect(Arrays.equal([e2], [e1], cmp)).toBe(false)
 })
+
 test('different length arrays are not equal', () => {
     expect(Arrays.equal([1], [], noReachCmp)).toBe(false)
     expect(Arrays.equal([], [1], noReachCmp)).toBe(false)
 })
+
 test('different permutation is not equal', () => {
     expect(Arrays.equal([1, 2], [2, 1], cmp)).toBe(false)
 })
