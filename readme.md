@@ -1,5 +1,5 @@
 [![Build status](https://travis-ci.com/seedtray/ts-validator.svg?branch=master)](https://travis-ci.com/seedtray/ts-validator)
-[![Coverage Status](https://coveralls.io/repos/github/seedtray/ts-validator/badge.svg)](https://coveralls.io/github/seedtray/ts-validator)
+[![Coverage Status](https://coveralls.io/repos/github/seedtray/ts-validator/badge.svg?branch=master)](https://coveralls.io/github/seedtray/ts-validator?branch=master)
 
 ## Goal
 ts-validator provides runtime Typescript validations for value objects.
